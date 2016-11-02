@@ -1,0 +1,90 @@
+set multiplot
+set size 0.5,0.1
+
+set origin 0.0,0.125
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot0.dat" using 1:2 with lines
+
+set origin 0.5,0.125
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot1.dat" using 1:2 with lines
+
+set origin 0.0,0.250
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot2.dat" using 1:2 with lines
+
+set origin 0.5,0.250
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot3.dat" using 1:2 with lines
+
+set origin 0.0,0.375
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot4.dat" using 1:2 with lines
+
+set origin 0.5,0.375
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot5.dat" using 1:2 with lines
+
+set origin 0.0,0.5
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot6.dat" using 1:2 with lines
+
+set origin 0.5,0.5
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot7.dat" using 1:2 with lines
+
+set origin 0.0,0.625
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot8.dat" using 1:2 with lines
+
+set origin 0.5,0.625
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot9.dat" using 1:2 with lines
+
+set origin 0.0,0.75
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot10.dat" using 1:2 with lines
+
+set origin 0.5,0.75
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot11.dat" using 1:2 with lines
+
+set origin 0.0,0.875
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot12.dat" using 1:2 with lines
+
+set origin 0.5,0.875
+set xrange[0:128]
+set yrange[6000:10000]
+set ytics 6000,2000,10000
+plot "plot13.dat" using 1:2 with lines
+unset multiplot
+
+pause 1
+reread
