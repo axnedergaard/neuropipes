@@ -5,7 +5,7 @@ extdeps = emokit.c
 emoflags = -lmcrypt -lhidapi-libusb
 miscflags = -lfftw3 -lliquid -lm -g -Wall
 
-all : cli driver
+all : driver
 
 clean : 
 	rm -f driver
