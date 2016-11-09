@@ -6,6 +6,12 @@
 #include "linkedlist.h"
 #include <fftw3.h>
 
+struct buffer_fouriertransform {
+  fftw_plan *ft_p;
+  fftw_complex *ft_in;
+  fftw_complex *ft_out;
+};
+
 int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   data* input = *(data**)linkedlist_iterate(l); 
   if (input == NULL)  {
@@ -15,6 +21,35 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   linkedlist_reset_iterater(l);
   
   p->output = data_create_real_from_complex(input);
+
+  //init buffer and FFT TODO mem alloc fail frees?
+  int c = input->shape[0];  //number of channels
+  int n = input->shape[1]/2;  //number of recordings, divide by 2 because input complex
+  
+  struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)malloc(sizeof(struct buffer_fouriertransform));
+  if (buffer == NULL)  {
+    fprintf(stderr, "fouriertransform_init: mem alloc for buffer failed\n");
+    return 0;
+  }
+  buffer->ft_p = (fftw_plan*)malloc(sizeof(fftw_plan)*c);
+  if (buffer->ft_p == NULL)  {
+    fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_p failed\n");
+    return 0;
+  }
+  buffer->ft_in = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  if (buffer->ft_in == NULL)  {
+    fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_in failed\n");
+    return 0;
+  }
+  buffer->ft_out = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  if (buffer->ft_out == NULL)  {
+    fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_out failed\n");
+    return 0;
+  }
+  for (int i = 0; i < c; i++)  {
+    buffer->ft_p[i] = fftw_plan_dft_1d(n, (buffer->ft_in + i*n), (buffer->ft_out + i*n), FFTW_BACKWARD, FFTW_ESTIMATE);
+  }
+  p->buffer = buffer;
 
   return 1;
 }
@@ -27,39 +62,23 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   }
   linkedlist_reset_iterater(l);
  
- 
-  //translate input buffer into fftw_complex
-  //TODO auxiliary structure and init plan...
-  int c = p->output->shape[0];  //number of channels
-  int n = p->output->shape[1];  //number of recordings
-  double ft_in[c][n][2], ft_out[c][n][2];
-  fftw_plan *ft_p;
+  struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->buffer;
   
-  ft_p = (fftw_plan*)malloc(sizeof(fftw_plan)*c);
-  if (ft_p == NULL)  {
-    fprintf(stderr, "inversefouriertransform_run: mem alloc failed\n");
-    return 0;
-  }
-
-  for (int i = 0; i < c; i++)  {
-    ft_p[i] = fftw_plan_dft_1d(n, ft_in[i], ft_out[i], FFTW_BACKWARD, FFTW_ESTIMATE);
-  }
-
-  data_copy_from_data(input, ft_in);
+  data_copy_from_data(input, buffer->ft_in);
 
   //fft
+  int c = input->shape[0];
+  int n = input->shape[1]/2;
   for (int i = 0; i < c; i++)  {
-    fftw_execute(ft_p[i]);
-    for (int j = 0; j < n; j++)  {  //divide by n because fftw3 inverse fft doesn't automatically
-      ft_out[i][j][0] = ft_out[i][j][0]/n;
+    fftw_execute(buffer->ft_p[i]);
+    for (int j = 0; j < n; j++)  {  //divide by n because fftw3 inverse fft doesn't automatically TODO CBLAS?
+      *(buffer->ft_out + i*n + j) = (double)*(buffer->ft_out + i*n + j) / (double)n;
     }
   }
 
   //copy to buffer
-  data_copy_to_data_complex_to_real(p->output, ft_out);
+  data_copy_to_data_complex_to_real(p->output, buffer->ft_out);
   
-  free(ft_p);
-
   return 1;
 }
 

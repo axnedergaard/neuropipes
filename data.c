@@ -106,8 +106,6 @@ int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
       double real = d->buffer[i*n + j];
-    //  printf("copied %f\n", real);
-//      double imag = 0;
       buf[i*n*2 + j*2] = real; //2*j because real->complex
     }
   }
@@ -119,7 +117,7 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {
   int n = d->shape[1];
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
-      double real = buf[2*i*n + 2*j];
+      double real = buf[i*n*2 + j*2];
       d->buffer[i*n + j] = real;  //ignore complex values
     }
   }
