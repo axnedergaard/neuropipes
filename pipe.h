@@ -11,6 +11,7 @@ struct pipe {
   data* output;
   int status;  // <-1:error -1:not init 0:not complete >0:complete
   void* auxiliary; //auxiliary data structure, e.g. for emokit 
+  void* buffer;  //buffers used during runtime
   int(*init)(pipe_*, linkedlist*);
   int(*run)(pipe_*, linkedlist*); 
   //destructors?? TODO
@@ -21,7 +22,7 @@ pipe_ *pipe_create();
 int pipe_destroy(pipe_*);
 void pipe_set_id(pipe_*, int);
 int pipe_get_id(pipe_*);
-int pipe_run(pipe_*, linkedlist*);  //linkedlist=input pipes?
-int pipe_init(pipe_*, linkedlist*);  //linkedlist=input pipes
+int pipe_run(pipe_*, linkedlist*);  
+int pipe_init(pipe_*, linkedlist*);  
 
 #endif

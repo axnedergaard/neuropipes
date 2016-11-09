@@ -12,48 +12,93 @@ static int next_id = 0;
 
 struct pipeline {  //graph
   pipe_** nodes;  //critical: assume (entries[x] | 0 <= x < entries_n)
-  int* sort; //in-order sort of pipe_s
+  int* sort; //in-order sort of nodes
   int nodes_n;
   int nodes_max;
   linkedlist **adjacency_list;  //adjacency list with ints
   linkedlist **in_data; //in data for every node
-  int iterater;
+//  int iterater;
   int loop;
 };
 
 pipeline* pipeline_create()  {
   pipeline* pl = (pipeline*)malloc(sizeof(pipeline));
-  if (pl != NULL)  {
-    //TODO mem alloc failure
-    pl->nodes_max = INITIAL_MAX;
-    pl->nodes_n = 0;
-    pl->nodes = (pipe_**)malloc(sizeof(void*)*pl->nodes_max);
-    pl->sort = (int*)malloc(sizeof(int)*pl->nodes_max);
-    pl->adjacency_list = (linkedlist**)malloc(sizeof(linkedlist*)*pl->nodes_max);
-    pl->in_data = (linkedlist**)malloc(sizeof(linkedlist*)*pl->nodes_max);
-    pl->iterater = 0;
+  if (pl == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for pipe");
+    return NULL;
+  }
 
-    for (int i = 0; i < pl->nodes_max; i++)  {
-      pl->nodes[i] = NULL;
-      pl->sort[i] = -1;  //-1 = invalid
-    }
-  } 
+  pl->nodes_max = INITIAL_MAX;
+  pl->nodes_n = 0;
+
+  pl->nodes = (pipe_**)malloc(sizeof(void*)*pl->nodes_max);
+  if (pl->nodes == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for nodes");
+    free(pl);
+    return NULL;
+  }
+
+  pl->sort = (int*)malloc(sizeof(int)*pl->nodes_max);
+  if (pl->nodes == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for sort");
+    free(pl->nodes);
+    free(pl);
+    return NULL;
+  }
+
+  pl->adjacency_list = (linkedlist**)malloc(sizeof(linkedlist*)*pl->nodes_max);
+  if (pl->nodes == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for adjacency list");
+    free(pl->nodes);
+    free(pl->sort);
+    free(pl);
+    return NULL;
+  }
+
+  pl->in_data = (linkedlist**)malloc(sizeof(linkedlist*)*pl->nodes_max);
+  if (pl->nodes == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for in data");
+    free(pl->nodes);
+    free(pl->sort);
+    free(pl->in_data);
+    free(pl);
+    return NULL;
+  }
+ // pl->iterater = 0;
+
+  for (int i = 0; i < pl->nodes_max; i++)  {
+    pl->nodes[i] = NULL;
+    pl->sort[i] = -1;  //-1 = invalid
+  }
+
   piperegistry_init();
+
   return pl;
 }
 
-int pipeline_destroy(pipeline* pl)  {
+int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destroying elements? TODO
   if (pl != NULL)  {
-    //dealloc pipeline_entries TODO
+    for (int i = 0; i < pl->nodes_n; i++)  {
+      if (pl->nodes[i] != NULL)  {
+        if (pipe_destroy(pl->nodes[i]) == 0)  {
+          return 0;
+        }
+      }
+    }
     for (int i = 0; i < pl->nodes_max; i++)  {
       if (pl->adjacency_list[i] != NULL)  {
-        linkedlist_destroy(pl->in_data[i]);
+        if (linkedlist_destroy(pl->in_data[i]) == 0)  {
+          return 0;
+        }
       }
       if (pl->in_data[i] != NULL)  {
-        linkedlist_destroy(pl->adjacency_list[i]);
+        if (linkedlist_destroy(pl->adjacency_list[i]) == 0)  {
+          return 0;
+        }
       }
     }
     free(pl->nodes);
+    free(pl->sort);
     free(pl);
     return 1;
   }
@@ -72,12 +117,12 @@ int pipeline_get_loop(pipeline* pl)  {
   return pl->loop;
 }
 
-pipe_* pipeline_get_pipe_(pipeline* pl, int id)  {
+pipe_* pipeline_get_pipe(pipeline* pl, int id)  {
   if ((id >= 0) && (id < pl->nodes_n))  {
     return pl->nodes[id];
   }
   else  {
-//    fprintf(stderr, "pipeline_get_pipe_: pipe_ does not exist\n");
+//    fprintf(stderr, "pipeline_get_pipe: pipe_ does not exist\n");
     return NULL;
   }
 }
@@ -96,21 +141,29 @@ int pipeline_expand(pipeline* pl)  {
 }
 
 int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
-  linkedlist_insert(pl->adjacency_list[u], (void*)v);
-  linkedlist_insert(pl->in_data[v], &pl->nodes[u]->output);
+  if (linkedlist_insert(pl->adjacency_list[u], (void*)v) == 0)  {
+    return 0;
+  }
+  if (linkedlist_insert(pl->in_data[v], &pl->nodes[u]->output) == 0)  {
+    return 0;
+  }
   return 1;   
 }
 
 int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working proper)
-  linkedlist_remove(pl->adjacency_list[u], (void*)v);
-  linkedlist_remove(pl->in_data[u], &pl->nodes[v]->output);
+  if (linkedlist_remove(pl->adjacency_list[u], (void*)v) == 0)  {
+    return 0;
+  }
+  if (linkedlist_remove(pl->in_data[u], &pl->nodes[v]->output) == 0)  {
+    return 0;
+  }
   return 1;
 }
 
 int pipeline_insert(pipeline* pl, char* type)  {
   pipe_* p = build_pipe(type);
+
   pipe_set_id(p, next_id++);
-//  printf("built pipe_ %p with id %d\n", p, pipe_get_id(p));
 
   if (pl->nodes_n >= pl->nodes_max)  {  
     pipeline_expand(pl);
@@ -126,13 +179,13 @@ int pipeline_insert(pipeline* pl, char* type)  {
 }
 
 int pipeline_remove(pipeline* pl, int pid)  {  //TODO (working?)
-  pipe_* p = pipeline_get_pipe_(pl, pid);
+  pipe_* p = pipeline_get_pipe(pl, pid);
   if (p == NULL)  {
     fprintf(stderr, "pipeline_remove: pipe_ not in pipeline\n");
     return 0;
   }
   else  {
-    pipe_* successor;
+    pipe_* successor = NULL;
     while ((successor = linkedlist_iterate(pl->adjacency_list[pid])) != NULL)  {
       if (pipeline_remove_edge(pl, pid, pipe_get_id(successor)))  {
         fprintf(stderr, "pipeline_remove: failed to remove edge\n");
@@ -179,7 +232,7 @@ int pipeline_sort(pipeline* pl)  {  //make ordered sort, filling in empty gaps?
 }
 
 int pipeline_init(pipeline* pl)  {
-  //printf("initing: n=%d\n", pl->entries_n);
+//  printf("initing: n=%d\n", pl->nodes_n);
   pipeline_sort(pl);
   //pipe_s are now sorted 
   for (int i = 0; i < pl->nodes_n; i++)  {

@@ -18,6 +18,5 @@ int pipeline_insert_edge(pipeline*, int, int);
 int pipeline_remove_edge(pipeline*, int, int);
 int pipeline_init(pipeline*);
 int pipeline_run(pipeline*);
-int pipeline_size(pipeline*);
 
 #endif

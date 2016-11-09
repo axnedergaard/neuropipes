@@ -18,7 +18,7 @@ int main()  {
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
   insert_next(pl, "PRINT"); 
 
-//  pipeline_set_loop(pl, 1);
+  pipeline_set_loop(pl, 1);
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

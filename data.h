@@ -16,19 +16,13 @@ struct data {
 };
 
 int data_get_type(data*);  //get type (e.g. real or complex) from data
-
 data *data_create(int, int*, int*);
 data *data_create_from_string(char*);
-int data_destroy(data*);
-
 data *data_create_complex_from_real(data*);
 data *data_create_real_from_complex(data*);
-//data *data_create_real_from_complex(data*);
-
+int data_destroy(data*);
 int data_copy_to_data(data*, double*);
-//nt data_copy_to_data_complex_to_complex();
 int data_copy_to_data_complex_to_complex(data*, double*);
 int data_copy_from_data_real_to_complex(data*, double*);
-//int data_copy_from_buffer_complex_to_real(data*, double**);
 
 #endif

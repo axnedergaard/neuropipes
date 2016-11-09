@@ -32,7 +32,7 @@ data* data_create(int n, int *shape, int *stride)  {
   if ((d->buffer = (float*)malloc(sizeof(float)*d->len)) == NULL)  {
     fprintf(stderr, "data_create: failed to allocate memory for buffer\n");
   }
-  printf("created data with %d %d\n", d->shape[0], d->shape[1]);
+//  printf("created data with %d %d\n", d->shape[0], d->shape[1]);
   return d;
 }
 
@@ -100,19 +100,15 @@ data *data_create_real_from_complex(data *input)  {
   return output;
 }
 
-//data *data_create_real_from_complex(data *input)  {
-  
-//}
-
 int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
   int c = d->shape[0];
   int n = d->shape[1];
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
       double real = d->buffer[i*n + j];
-      double imag = 0;
-      buf[2*i*n + 2*j + 0] = real; //2*j because real->complex
-      buf[2*i*n + 2*j + 1] = imag; 
+    //  printf("copied %f\n", real);
+//      double imag = 0;
+      buf[i*n*2 + j*2] = real; //2*j because real->complex
     }
   }
   return 1;
@@ -129,7 +125,6 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {
   }
   return 1;
 }
-
 
 int data_copy_to_data(data *d, double *buf)  {
   int len = 1;
@@ -150,20 +145,3 @@ int data_copy_from_data(data *d, double *buf)  {
     buf[i] = d->buffer[i];
   } 
 }
-
-/*
-int data_copy_to_data_complex_to_complex(data *d, double *buf)  {  //only 2D atm TODO same data type redundant?
-  int c = d->shape[0];
-  int n = d->shape[1];
-//printf("shapes = %d %d strides = %d %d\n", d->shape[0], d->shape[1], d->stride[0], d->stride[1]);
-  for (int i = 0; i < c; i += d->stride[0])  {
-    for (int j = 0; j < n; j += d->stride[1])  {
-      double real = buf[i*n + j + 0];
-      double imag = buf[i*n + j + 1];
-      d->buffer[i*d->shape[1] + j + 0] = real;
-      d->buffer[i*d->shape[1] + j + 1] = imag;
-    }
-  }
-  return 1;
-}
-*/

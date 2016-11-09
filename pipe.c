@@ -10,6 +10,7 @@ pipe_* pipe_create()  {
     p->init = NULL;
     p->output = NULL;
     p->auxiliary = NULL;
+    p->buffer = NULL;
     p->status = -1;  //not init
   }
   return p;
