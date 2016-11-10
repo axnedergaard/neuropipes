@@ -8,7 +8,9 @@ maindeps = $(addprefix $(maindir), $(main))
 pipesdeps = $(addprefix $(pipesdir), $(pipes))
 extdeps = $(addprefix $(maindir), $(ext))
 emoflags = -lmcrypt -lhidapi-libusb
-miscflags = -lfftw3 -lliquid -lm -g -Wall -std=c99
+miscflags = -lfftw3 -lliquid -lcmocka
+cflags = -g -Wall -std=c99 -lm
+depflags = -Idep/include -Ldep/lib
 
 all : driver
 
@@ -16,7 +18,7 @@ clean :
 	rm -f driver tests/test
 
 driver :  $(maindir)driver.c $(maindeps) $(pipesdeps)
-	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags)
+	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(depflags) $(emoflags) $(miscflags)
 
 test :	tests/test_pipeline.c $(maindeps) $(pipedeps) 
-	$(CC) -o tests/test tests/test_pipeline.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags) -lcmocka
+	$(CC) -o tests/test tests/test_pipeline.c $(maindeps) $(pipesdeps) $(extdeps) $(depflags) $(emoflags) $(miscflags) 
