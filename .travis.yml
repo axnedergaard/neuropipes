@@ -1,6 +1,6 @@
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -y libfftw3-3
+  - sudo apt-get install -y libfftw3-3 libc6 libusb
   - wget http://cz.archive.ubuntu.com/ubuntu/pool/universe/h/hidapi/libhidapi-libusb0_0.8.0~rc1+git20140201.3a66d4e+dfsg-2_i386.deb
   - sudo dpkg -i libhidapi-libusb0_0.8.0~rc1+git20140201.3a66d4e+dfsg-2_i386.deb
 language: c
