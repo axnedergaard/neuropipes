@@ -133,6 +133,7 @@ int data_copy_to_data(data *d, double *buf)  {
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
   }
+  return 1;
 }
 
 int data_copy_from_data(data *d, double *buf)  {
@@ -142,5 +143,6 @@ int data_copy_from_data(data *d, double *buf)  {
   }
   for (int i = 0; i < len; i++)  {
     buf[i] = d->buffer[i];
-  } 
+  }
+  return 1; 
 }

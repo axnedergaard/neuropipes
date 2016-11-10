@@ -1,4 +1,5 @@
 #include "debug_pipe.h"
+#include <stdlib.h>
 #include <stdio.h>
 
 struct debug_pipe {
