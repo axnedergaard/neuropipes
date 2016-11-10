@@ -1,5 +1,4 @@
-#include "pipe.h"
-#include "linkedlist.h"
+#include "../pipe.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <liquid/liquid.h>

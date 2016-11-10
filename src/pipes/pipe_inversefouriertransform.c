@@ -2,8 +2,7 @@
 #include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "pipe.h"
-#include "linkedlist.h"
+#include "../pipe.h"
 #include <fftw3.h>
 
 struct buffer_fouriertransform {
@@ -12,20 +11,20 @@ struct buffer_fouriertransform {
   fftw_complex *ft_out;
 };
 
-int fouriertransform_init(pipe_* p, linkedlist* l)  {
+int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   data* input = *(data**)linkedlist_iterate(l); 
   if (input == NULL)  {
-    fprintf(stderr, "fouriertransform_init: pipe_ must have 1 input\n");
+    fprintf(stderr, "inversefouriertransform_init: pipe_ must have 1 input\n");
     return 0;
   }
   linkedlist_reset_iterater(l);
   
-  p->output = data_create_complex_from_real(input);  //TODO extend to C->C case using data_get_type()
+  p->output = data_create_real_from_complex(input);
 
   //init buffer and FFT TODO mem alloc fail frees?
   int c = input->shape[0];  //number of channels
-  int n = input->shape[1];  //number of recordings
- 
+  int n = input->shape[1]/2;  //number of recordings, divide by 2 because input complex
+  
   struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)malloc(sizeof(struct buffer_fouriertransform));
   if (buffer == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for buffer failed\n");
@@ -47,31 +46,38 @@ int fouriertransform_init(pipe_* p, linkedlist* l)  {
     return 0;
   }
   for (int i = 0; i < c; i++)  {
-    buffer->ft_p[i] = fftw_plan_dft_1d(n, (buffer->ft_in + i*n), (buffer->ft_out + i*n), FFTW_FORWARD, FFTW_ESTIMATE);
+    buffer->ft_p[i] = fftw_plan_dft_1d(n, (buffer->ft_in + i*n), (buffer->ft_out + i*n), FFTW_BACKWARD, FFTW_ESTIMATE);
   }
   p->buffer = buffer;
- 
+
   return 1;
 }
 
-int fouriertransform_run(pipe_* p, linkedlist* l)  {
+int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   data* input = *(data**)linkedlist_iterate(l);
   if (input == NULL)  {
-    fprintf(stderr, "fouriertransform_run: pipe_ has no input\n");
+    fprintf(stderr, "inversefouriertransform_run: pipe_ has no input\n");
     return 0;
   }
   linkedlist_reset_iterater(l);
-
+ 
   struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->buffer;
   
-  data_copy_from_data_real_to_complex(input, buffer->ft_in);
+  data_copy_from_data(input, buffer->ft_in);
 
   //fft
-  for (int i = 0; i < input->shape[0]; i++)  {
+  int c = input->shape[0];
+  int n = input->shape[1]/2;
+  for (int i = 0; i < c; i++)  {
     fftw_execute(buffer->ft_p[i]);
+    for (int j = 0; j < n; j++)  {  //divide by n because fftw3 inverse fft doesn't automatically TODO CBLAS?
+      *(buffer->ft_out + i*n + j) = (double)*(buffer->ft_out + i*n + j) / (double)n;
+    }
   }
-  
-  data_copy_to_data(p->output, buffer->ft_out);
+
+  //copy to buffer
+  data_copy_to_data_complex_to_real(p->output, buffer->ft_out);
   
   return 1;
 }
+

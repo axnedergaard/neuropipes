@@ -129,6 +129,7 @@ int data_copy_to_data(data *d, double *buf)  {
   for (int i = 0; i < d->n; i++)  {
     len *= d->shape[i];
   }
+
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
   }

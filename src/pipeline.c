@@ -273,16 +273,15 @@ int pipeline_run(pipeline* pl)  {
     if (pl->loop == 0)  {
       quit = 1;
     }
-    else  {  //TODO actually time instead  
-      printf("pipeline ran in %fs\n", pipeline_time);
-      double lag = interval - pipeline_time;
-      if (lag > 0)  {
-        printf("sleeping for %fs\n\n", lag);
-        usleep(lag*1000000);
-      }
-      else  {
-        printf("\n");
-      }
+    //TODO actually time instead  
+    printf("pipeline ran in %fs\n", pipeline_time);
+    double lag = interval - pipeline_time;
+    if ((pl->loop == 1) && (lag > 0))  {
+      printf("sleeping for %fs\n\n", lag);
+      usleep(lag*1000000);
+    }
+    else  {
+      printf("\n");
     }
   }
 

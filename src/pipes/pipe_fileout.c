@@ -1,4 +1,4 @@
-#include "pipe.h"
+#include "../pipe.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,7 +6,7 @@
 
 //semi-toy pipe_ that prints all channels of EMOTIV-like data to files readable by a GNU-plot script
 
-int web_init(pipe_ *p, linkedlist *l)  {
+int fileout_init(pipe_ *p, linkedlist *l)  {
   if (linkedlist_size(l) != 1)  {
     fprintf(stderr, "graph_init: graph pipe_ must have exactly 1 input\n");
   }
@@ -14,14 +14,17 @@ int web_init(pipe_ *p, linkedlist *l)  {
   return 1;
 }
 
-int web_run(pipe_ *p, linkedlist *l)  {
+int fileout_run(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_iterate(l);
   linkedlist_reset_iterater(l);
-  //int c = input->shape[0];
-  //int n = input->shape[1];
-  char *filestring = "/srv/http/eeg.txt";
-  FILE *f = fopen(filestring, "w");   
-  fprintf(f, "{\n  \"data\": %f\n}\n", (float)input->buffer[0]);
+  char *filestring = "output.txt";
+  FILE *f = fopen(filestring, "w");
+  //fprintf(f, "{\n  \"data\": %f\n}\n", (float)input->buffer[0]);
+  int len = 1;
+  for (int i = 0; i < input->n; i++)  {
+    len *= input->shape[i];
+  }
+  fwrite(input->buffer, len, 1, f);
 /*
   fprintf(f, "{\n");
   for (int i = 0; i < c; i++)  {

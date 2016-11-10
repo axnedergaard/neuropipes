@@ -1,5 +1,4 @@
-#include "pipe.h"
-#include "linkedlist.h"
+#include "../pipe.h"
 
 int mean_init(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_iterate(l);

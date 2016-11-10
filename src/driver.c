@@ -16,7 +16,7 @@ int main()  {
   insert_next(pl, "DUMMYEMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "PRINT"); 
+  insert_next(pl, "FILEOUT"); 
 
   pipeline_set_loop(pl, 0);
 

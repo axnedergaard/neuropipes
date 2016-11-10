@@ -1,4 +1,4 @@
-#include "pipe.h"
+#include "../pipe.h"
 #include <stdio.h>
 
 int print_init(pipe_ *p, linkedlist *l)  {

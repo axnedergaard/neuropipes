@@ -1,5 +1,5 @@
-#include "pipe.h"
-#include "emokit.h"
+#include "../pipe.h"
+#include "../emokit.h"
 #include <stdio.h>
 #include <stdlib.h>
 
