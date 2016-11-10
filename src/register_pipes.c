@@ -27,4 +27,5 @@ int register_pipes()  {
   piperegistry_register("PRINT", &print_init, &print_run, "");
   piperegistry_register("ALPHABANDPASS", &alphabandpass_init, &alphabandpass_run, "");
   piperegistry_register("FILEOUT", &fileout_init, &fileout_run, "");
+  return 1;
 }

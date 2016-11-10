@@ -10,7 +10,7 @@ extdeps = $(addprefix $(maindir), $(ext))
 emoflags = -lmcrypt -lhidapi-libusb
 miscflags = -lfftw3 -lliquid -lcmocka -lm
 cflags = -g -Wall -std=c99 
-depflags = -Idep/include -Ldep/lib
+depflags = -Ishared/include -Lshared/lib
 
 all : driver
 
