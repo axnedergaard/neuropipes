@@ -3,5 +3,5 @@ compiler: gcc
 script: 
   - make
   - make test
-  - cd test
+  - cd tests
   - ./test

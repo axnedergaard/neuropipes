@@ -8,12 +8,12 @@ maindeps = $(addprefix $(maindir), $(main))
 pipesdeps = $(addprefix $(pipesdir), $(pipes))
 extdeps = $(addprefix $(maindir), $(ext))
 emoflags = -lmcrypt -lhidapi-libusb
-miscflags = -lfftw3 -lliquid -lm -g -Wall
+miscflags = -lfftw3 -lliquid -lm -g -Wall -std=c99
 
 all : driver
 
 clean : 
-	rm -f driver test
+	rm -f driver tests/test
 
 driver :  $(maindir)driver.c $(maindeps) $(pipesdeps)
 	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags)
