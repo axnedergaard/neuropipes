@@ -13,7 +13,10 @@ miscflags = -lfftw3 -lliquid -lm -g -Wall
 all : driver
 
 clean : 
-	rm -f driver
+	rm -f driver test
 
 driver :  $(maindir)driver.c $(maindeps) $(pipesdeps)
 	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags)
+
+test : test/test_pipeline.c $(maindeps) $(pipedeps) 
+	$(CC) -o test/test test/test_pipeline.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags) -lcmocka
