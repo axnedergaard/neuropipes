@@ -18,5 +18,5 @@ clean :
 driver :  $(maindir)driver.c $(maindeps) $(pipesdeps)
 	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags)
 
-test : test/test_pipeline.c $(maindeps) $(pipedeps) 
-	$(CC) -o test/test test/test_pipeline.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags) -lcmocka
+test :	tests/test_pipeline.c $(maindeps) $(pipedeps) 
+	$(CC) -o tests/test tests/test_pipeline.c $(maindeps) $(pipesdeps) $(extdeps) $(emoflags) $(miscflags) -lcmocka
