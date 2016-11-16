@@ -39,8 +39,9 @@ int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)
   }
   pd->init = init;
   pd->run = run;
-  pd->valid_inputs = strdup(valid_inputs);  //dangerous?
-  if (hashtable_insert(ht, name, (void*)pd) == 0)  {  //name already in table
+  pd->valid_inputs = (char*)malloc(sizeof(char)*strlen(valid_inputs));
+  strncpy(pd->valid_inputs, valid_inputs, strlen(valid_inputs));
+  if (hashtable_insert(ht,name, (void*)pd) == 0)  {  //name already in table
     free(pd->valid_inputs);
     free(pd);
     fprintf(stderr, "register pipe: failed to register pipe %s\n", name);

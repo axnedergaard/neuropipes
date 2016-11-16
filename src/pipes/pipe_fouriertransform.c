@@ -63,14 +63,14 @@ int fouriertransform_run(pipe_* p, linkedlist* l)  {
 
   struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->buffer;
   
-  data_copy_from_data_real_to_complex(input, buffer->ft_in);
+  data_copy_from_data_real_to_complex(input, (void*)buffer->ft_in);
 
   //fft
   for (int i = 0; i < input->shape[0]; i++)  {
     fftw_execute(buffer->ft_p[i]);
   }
   
-  data_copy_to_data(p->output, buffer->ft_out);
+  data_copy_to_data(p->output, (void*)buffer->ft_out);
   
   return 1;
 }

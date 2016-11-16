@@ -5,6 +5,7 @@
 #include "piperegistry.h"
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 #define INITIAL_MAX 8
 
@@ -141,7 +142,7 @@ int pipeline_expand(pipeline* pl)  {
 }
 
 int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
-  if (linkedlist_insert(pl->adjacency_list[u], (void*)v) == 0)  {
+  if (linkedlist_insert(pl->adjacency_list[u], (void*)(intptr_t)v) == 0)  {
     return 0;
   }
   if (linkedlist_insert(pl->in_data[v], &pl->nodes[u]->output) == 0)  {
@@ -151,7 +152,7 @@ int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
 }
 
 int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working proper)
-  if (linkedlist_remove(pl->adjacency_list[u], (void*)v) == 0)  {
+  if (linkedlist_remove(pl->adjacency_list[u], (void*)(intptr_t)v) == 0)  {
     return 0;
   }
   if (linkedlist_remove(pl->in_data[u], &pl->nodes[v]->output) == 0)  {
@@ -215,7 +216,7 @@ int pipeline_sort(pipeline* pl)  {  //make ordered sort, filling in empty gaps?
     } 
     
    int out_edge;
-   while ((out_edge = (int)linkedlist_iterate(pl->adjacency_list[i])) != NULL)  {
+   while ((out_edge = (int)(intptr_t)linkedlist_iterate(pl->adjacency_list[i])) != 0)  {
      if (--in[out_edge] == 0)  {
        pl->sort[added++] = out_edge;
      }
@@ -252,7 +253,7 @@ int pipeline_run(pipeline* pl)  {
   }
 
   int quit = 0; 
-  double interval = 1.0;
+  //double interval = 1.0;
   while (quit == 0)  {  //time sync?
     double pipeline_time = 0;
     for (int i = 0; i < pl->nodes_n; i++)  {

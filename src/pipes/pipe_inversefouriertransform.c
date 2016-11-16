@@ -63,7 +63,7 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
  
   struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->buffer;
   
-  data_copy_from_data(input, buffer->ft_in);
+  data_copy_from_data(input, (void*)buffer->ft_in);
 
   //fft
   int c = input->shape[0];
@@ -76,7 +76,7 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   }
 
   //copy to buffer
-  data_copy_to_data_complex_to_real(p->output, buffer->ft_out);
+  data_copy_to_data_complex_to_real(p->output, (void*)buffer->ft_out);
   
   return 1;
 }

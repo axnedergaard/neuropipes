@@ -201,7 +201,7 @@ int emokit_read_data_timeout(struct emokit_device* s, unsigned timeout)
 EMOKIT_DECLSPEC
 void emokit_get_crypto_key(struct emokit_device* s, int dev_type) {
 	unsigned char type = (unsigned char) dev_type;
-	int i;
+	//int i;
 	unsigned int l = 16;
 	type &= 0xF;
 	type = (type == 0);
@@ -253,7 +253,7 @@ int get_level(unsigned char frame[32], const unsigned char bits[14]) {
 		b = (bits[i] >> 3) + 1;
 		o = bits[i] % 8;
 
-		level |= (frame[b] >> o) & 1;
+		level |= (frame[(int)b] >> o) & 1;
 	}
 	return level;
 }

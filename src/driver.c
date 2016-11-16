@@ -13,7 +13,7 @@ void insert_next(pipeline *pl, char *pipe)  {
 int main(int argc, char **argv)  {
   pipeline* pl = pipeline_create();
 
-  if (argv > 1)  {
+  if (argc > 1)  {
     pipeline_set_loop(pl, 100);
   }
   
