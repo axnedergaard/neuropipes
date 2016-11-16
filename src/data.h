@@ -1,6 +1,8 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <stdio.h>
+
 #define TYPE_REAL 0
 #define TYPE_COMPLEX 1
 
@@ -25,5 +27,7 @@ int data_copy_from_data(data*, double*);
 int data_copy_to_data(data*, double*);
 int data_copy_from_data_real_to_complex(data*, double*);
 int data_copy_from_data_complex_to_real(data*, double*);
+int data_write(data*, FILE*);
+int data_read(data*, FILE*);
 
 #endif

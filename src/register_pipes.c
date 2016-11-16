@@ -15,8 +15,10 @@ int print_init(pipe_*, linkedlist*);
 int print_run(pipe_*, linkedlist*);
 int alphabandpass_init(pipe_*, linkedlist*);
 int alphabandpass_run(pipe_*, linkedlist*);
-int fileout_init(pipe_*, linkedlist*);
-int fileout_run(pipe_*, linkedlist*);
+int writefile_init(pipe_*, linkedlist*);
+int writefile_run(pipe_*, linkedlist*);
+int readfile_init(pipe_*, linkedlist*);
+int readfile_run(pipe_*, linkedlist*);
 
 int register_pipes()  {
   piperegistry_register("DUMMYEMOTIV", &dummyemotiv_init, &dummyemotiv_run, "");
@@ -26,6 +28,7 @@ int register_pipes()  {
   piperegistry_register("MEAN", &mean_init, &mean_run, "");
   piperegistry_register("PRINT", &print_init, &print_run, "");
   piperegistry_register("ALPHABANDPASS", &alphabandpass_init, &alphabandpass_run, "");
-  piperegistry_register("FILEOUT", &fileout_init, &fileout_run, "");
+  piperegistry_register("WRITEFILE", &writefile_init, &writefile_run, "");
+  piperegistry_register("READFILE", &readfile_init, &readfile_run, "");
   return 1;
 }

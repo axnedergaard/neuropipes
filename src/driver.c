@@ -10,15 +10,17 @@ void insert_next(pipeline *pl, char *pipe)  {
   next++;
 }
 
-int main()  {
+int main(int argc, char **argv)  {
   pipeline* pl = pipeline_create();
+
+  if (argv > 1)  {
+    pipeline_set_loop(pl, 100);
+  }
   
   insert_next(pl, "DUMMYEMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "FILEOUT"); 
-
-  pipeline_set_loop(pl, 0);
+  insert_next(pl, "WRITEFILE"); 
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

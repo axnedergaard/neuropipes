@@ -1,4 +1,6 @@
 #include "../pipe.h"
+#include "../data.h"
+
 #include <stdio.h>
 
 int print_init(pipe_ *p, linkedlist *l)  {
@@ -12,8 +14,11 @@ int print_init(pipe_ *p, linkedlist *l)  {
 
 int print_run(pipe_ *p, linkedlist *l)  {
   data** input_pointer = NULL;
+
   while ((input_pointer = (data**)linkedlist_iterate(l)) != NULL)  {
-    data* input = *input_pointer;  
+    data* input = *input_pointer;
+    data_write(input, stdout);
+    /*
     if (input->n > 2)  {
       printf(">2d printing not implemented\n");
     }
@@ -53,7 +58,7 @@ int print_run(pipe_ *p, linkedlist *l)  {
     }
     printf("\n");
     input = NULL;
-  }
+  */}
   linkedlist_reset_iterater(l);
 
   return 1; 

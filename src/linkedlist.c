@@ -9,13 +9,14 @@ struct linkedlist_node  {
 };
 
 struct linkedlist  {
-  linkedlist_node* root;
+  linkedlist_node *head;
+  linkedlist_node *tail;
   int size;
-  linkedlist_node* iterater;
+  linkedlist_node *iterater;
   int iterater_init;
 };
 
-linkedlist* linkedlist_create()  {
+linkedlist *linkedlist_create()  {
   linkedlist* l = (linkedlist*)malloc(sizeof(linkedlist));
   if (l == NULL)  {
     printf("linkedlist_create: failed to alloc mem\n");
@@ -24,11 +25,12 @@ linkedlist* linkedlist_create()  {
   l->size = 0;
   l->iterater_init = 0;
   l->iterater = NULL;
-  l->root = NULL;
+  l->head = NULL;
+  l->tail = NULL;
   return l;
 }
 
-int linkedlist_destroy(linkedlist* l)  {
+int linkedlist_destroy(linkedlist* l)  {  //TODO destroy nodes?
   free(l->iterater);
   free(l);
   return 1;
@@ -36,7 +38,7 @@ int linkedlist_destroy(linkedlist* l)  {
 
 int linkedlist_insert(linkedlist* l, void* d)  {
   linkedlist_node* prev = NULL;
-  linkedlist_node* cur = l->root;
+  linkedlist_node* cur = l->head;
   while (cur != NULL)  {
     prev = cur;
     cur = cur->next;
@@ -52,15 +54,16 @@ int linkedlist_insert(linkedlist* l, void* d)  {
     prev->next = inserted;
   }
   else  {
-    l->root = inserted;
+    l->head = inserted;
   }
+  l->tail = inserted;
   l->size++;
   return 1;
 }
 
 int linkedlist_remove(linkedlist* l, void* d)  {
   linkedlist_node* prev = NULL;
-  linkedlist_node* cur = l->root;
+  linkedlist_node* cur = l->head;
   while ((cur != NULL) && (cur->data != d))   {
     prev = cur;
     cur = cur->next;
@@ -71,6 +74,9 @@ int linkedlist_remove(linkedlist* l, void* d)  {
   if (prev != NULL)  {  //update predecessor if exists
      prev->next = cur->next;
   }
+  if (l->tail == cur)  {  //update tail if removed node was tail
+    l->tail = prev;
+  }
   free(cur); //deallocate memory 
   l->size--;
   return 1; //success
@@ -80,10 +86,18 @@ int linkedlist_size(linkedlist* l)  {
   return l->size;
 }
 
-void* linkedlist_iterate(linkedlist* l)  {
+void *linkedlist_head(linkedlist *l)  {
+  return l->head->data;
+}
+
+void *linkedlist_tail(linkedlist *l)  {
+  return l->tail->data;
+}
+
+void *linkedlist_iterate(linkedlist *l)  {
   if (l->iterater_init == 0)  {
     l->iterater_init = 1;
-    l->iterater = l->root;
+    l->iterater = l->head;
   }
   if (l->iterater != NULL)  {
     void* tmp = l->iterater->data;

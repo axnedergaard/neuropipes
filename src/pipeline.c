@@ -254,17 +254,16 @@ int pipeline_run(pipeline* pl)  {
   int quit = 0; 
   double interval = 1.0;
   while (quit == 0)  {  //time sync?
-    double pipeline_time = 0; 
+    double pipeline_time = 0;
     for (int i = 0; i < pl->nodes_n; i++)  {
-      double pipe_time = 0;
-      struct timeval time_before, time_after;
-      gettimeofday(&time_before, NULL);
+      debug_pipe *debug = pl->nodes[pl->sort[i]]->debug;
+      debug_pipe_start_timer(debug);
       if (pipe_run(pl->nodes[pl->sort[i]], pl->in_data[pl->sort[i]]) != 1)  {
         fprintf(stderr, "pipeline_run: failed to run pipe %d\n", pl->sort[i]); 
         return 0;
       }
-      gettimeofday(&time_after, NULL);
-      pipe_time += ((double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000.0);
+      debug_pipe_stop_timer(debug);     
+      double pipe_time = debug_pipe_time(debug);
       if (pipe_time > 0)  {
         pipeline_time += pipe_time;
       }
@@ -273,16 +272,26 @@ int pipeline_run(pipeline* pl)  {
     if (pl->loop == 0)  {
       quit = 1;
     }
+    else if (pl->loop > 0)  {
+      pl->loop--;
+    }
     //TODO actually time instead  
     printf("pipeline ran in %fs\n", pipeline_time);
-    double lag = interval - pipeline_time;
-    if ((pl->loop == 1) && (lag > 0))  {
+  /*  double lag = interval - pipeline_time;
+    if ((pl->loop != 0) && (lag > 0))  {
       printf("sleeping for %fs\n\n", lag);
       usleep(lag*1000000);
+    printf("done\n");
     }
     else  {
       printf("\n");
     }
+    */
+  }
+  //print pipe averages run times
+  for (int i = 0; i < pl->nodes_n; i++)  {
+    double pipe_average_time = debug_pipe_average_time(pl->nodes[pl->sort[i]]->debug);
+    fprintf(stdout, "pipe %d average run time: %fs\n", i, pipe_average_time);
   }
 
   return 1;

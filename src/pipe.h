@@ -15,7 +15,7 @@ struct pipe {
   int(*init)(pipe_*, linkedlist*);
   int(*run)(pipe_*, linkedlist*); 
   //destructors?? TODO
-  debug_pipe *debug;  //TODO everything in class relating to this
+  debug_pipe *debug; 
 };
 
 pipe_ *pipe_create();

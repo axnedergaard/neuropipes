@@ -6,6 +6,12 @@
 pipe_* pipe_create()  {
   pipe_ *p = (pipe_*)malloc(sizeof(pipe_));
   if (p != NULL)  {
+    p->debug = debug_pipe_create();
+    if (p->debug == NULL)  {
+      free(p);
+      fprintf(stderr, "pipe_create: failed to create debug\n");
+      return NULL;
+    }
     p->run = NULL;
     p->init = NULL;
     p->output = NULL;
@@ -18,6 +24,7 @@ pipe_* pipe_create()  {
 
 int pipe_destroy(pipe_ *p)  {
   if (p != NULL)  {
+    debug_pipe_destroy(p->debug);
     if (p->output != NULL)  data_destroy(p->output);
     if (p->auxiliary != NULL)  free(p->auxiliary);
     free(p);

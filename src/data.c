@@ -146,3 +146,20 @@ int data_copy_from_data(data *d, double *buf)  {
   }
   return 1; 
 }
+
+int data_write(data *d, FILE* f)  { 
+  int c = d->shape[0];
+  int n = d->shape[1];
+  for (int i = 0; i < c; i++)  {
+    for (int j = 0; j < n; j++)  {
+      float reading = d->buffer[i*n + j];  
+      fprintf(f, "%f ", reading);
+    }
+    fprintf(f, "\n");
+  }
+  return 1;
+}
+
+int data_read(data *d, FILE* f)  {
+  return 1;
+}
