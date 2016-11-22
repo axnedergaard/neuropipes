@@ -9,8 +9,8 @@ pipesdeps = $(addprefix $(pipesdir), $(pipes))
 extdeps = $(addprefix $(maindir), $(ext))
 emoflags = -lmcrypt -lhidapi-libusb
 miscflags = -lfftw3 -lliquid -lcmocka -lm
-cflags = -g -Wall -std=c99 
-depflags = -Ishared/include -Lshared/lib
+cflags = -Wall -std=c99 -g -pg
+depflags = -Lshared/lib -Ishared/include
 
 all : driver
 
