@@ -1,6 +1,8 @@
 language: c
 compiler: gcc
-script: 
+script:
+  - sudo apt-get update -q 
+  - sudo apt-get install udev -y
   - make
   - make test
   - cd tests
