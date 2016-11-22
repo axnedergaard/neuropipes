@@ -2,7 +2,7 @@ language: c
 compiler: gcc
 script:
   - sudo apt-get update -q 
-  - sudo apt-get install udev -y
+  - sudo apt-get install libudev-dev -y
   - make
   - make test
   - cd tests
