@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "pipeline.h"
 
 static int next = 0;
@@ -14,13 +15,13 @@ int main(int argc, char **argv)  {
   pipeline* pl = pipeline_create();
 
   if (argc > 1)  {
-    pipeline_set_loop(pl, 100);
+    pipeline_set_loop(pl, atoi(argv[1]));
   }
   
   insert_next(pl, "DUMMYEMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "WRITEFILE"); 
+  insert_next(pl, "PRINT"); 
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

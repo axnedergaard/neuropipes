@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include "gettime.h"
 
 #define INITIAL_MAX 8
 
@@ -252,7 +253,8 @@ int pipeline_run(pipeline* pl)  {
     return 0;
   }
 
-  int quit = 0; 
+  int quit = 0;
+  double time_before = get_clock_time(); 
   //double interval = 1.0;
   while (quit == 0)  {  //time sync?
     double pipeline_time = 0;
@@ -294,6 +296,8 @@ int pipeline_run(pipeline* pl)  {
     double pipe_average_time = debug_pipe_average_time(pl->nodes[pl->sort[i]]->debug);
     fprintf(stdout, "pipe %d average run time: %fs\n", i, pipe_average_time);
   }
+  double time_after = get_clock_time();
+  fprintf(stdout, "total time %fs\n", time_after - time_before);
 
   return 1;
 }

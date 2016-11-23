@@ -62,9 +62,8 @@ double debug_pipe_time(debug_pipe *d)  {
     time_interval *interval = (time_interval*)linkedlist_tail(d->time_intervals);
     struct timeval time_before = interval->time_before;
     struct timeval time_after = interval->time_after;
-    //TODO fix bug
-    double time = (((double)time_after.tv_sec - (double)time_before.tv_sec) + ((double)time_after.tv_usec - (double)time_before.tv_usec) / 1000.0);  
-    return time;
+    double time = (double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000000.0; 
+   return time;
   }
   return -1;
 }
@@ -76,7 +75,7 @@ double debug_pipe_average_time(debug_pipe *d)  {
     while ((interval = linkedlist_iterate(d->time_intervals)) != NULL)  {
       struct timeval time_before = interval->time_before;
       struct timeval time_after = interval->time_after;
-      average += ((double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000.0);  
+      average += ((double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000000.0);  
     }
     average /= (double)linkedlist_size(d->time_intervals);
     return average;
