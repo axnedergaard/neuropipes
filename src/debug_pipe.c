@@ -1,13 +1,13 @@
 #include "debug_pipe.h"
+#include "gettime.h"
 #include "linkedlist.h"
-#include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 typedef struct time_interval time_interval;
 struct time_interval {
-  struct timeval time_before;
-  struct timeval time_after;  
+  double time_before;
+  double time_after;  
 };
 
 struct debug_pipe {
@@ -42,7 +42,7 @@ int debug_pipe_start_timer(debug_pipe *d)  {
     return -1;
   }
 
-  gettimeofday(&(interval->time_before), NULL);
+  interval->time_before = get_clock_time();
 
   linkedlist_insert(d->time_intervals, (void*)interval);
 
@@ -52,7 +52,7 @@ int debug_pipe_start_timer(debug_pipe *d)  {
 int debug_pipe_stop_timer(debug_pipe *d)  {
   time_interval *interval = (time_interval*)linkedlist_tail(d->time_intervals);
 
-  gettimeofday((&interval->time_after), NULL);
+  interval->time_after = get_clock_time();
 
   return 1;
 }
@@ -60,10 +60,7 @@ int debug_pipe_stop_timer(debug_pipe *d)  {
 double debug_pipe_time(debug_pipe *d)  {
   if (linkedlist_size(d->time_intervals) > 0)  {
     time_interval *interval = (time_interval*)linkedlist_tail(d->time_intervals);
-    struct timeval time_before = interval->time_before;
-    struct timeval time_after = interval->time_after;
-    double time = (double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000000.0; 
-   return time;
+    return interval->time_after - interval->time_before; 
   }
   return -1;
 }
@@ -73,9 +70,7 @@ double debug_pipe_average_time(debug_pipe *d)  {
     double average = 0;
     time_interval *interval = NULL;
     while ((interval = linkedlist_iterate(d->time_intervals)) != NULL)  {
-      struct timeval time_before = interval->time_before;
-      struct timeval time_after = interval->time_after;
-      average += ((double)(time_after.tv_sec - time_before.tv_sec) + (double)(time_after.tv_usec - time_before.tv_usec) / 1000000.0);  
+      average += interval->time_after - interval->time_before;  
     }
     average /= (double)linkedlist_size(d->time_intervals);
     return average;

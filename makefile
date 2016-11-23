@@ -8,7 +8,7 @@ maindeps = $(addprefix $(maindir), $(main))
 pipesdeps = $(addprefix $(pipesdir), $(pipes))
 extdeps = $(addprefix $(maindir), $(ext))
 lflags = -lhidapi-libusb -lmcrypt -lfftw3 -lliquid -lcmocka -lm
-cflags = -Wall -std=c99 -g -pg
+cflags = -Wall -g -pg -std=gnu99
 
 all : driver
 

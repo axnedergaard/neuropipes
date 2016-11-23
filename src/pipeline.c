@@ -254,10 +254,11 @@ int pipeline_run(pipeline* pl)  {
   }
 
   int quit = 0;
-  double time_before = get_clock_time(); 
+  double interval = 0;
+  double total_time_before = get_clock_time(); 
   //double interval = 1.0;
   while (quit == 0)  {  //time sync?
-    double pipeline_time = 0;
+    double pipeline_time_before = get_clock_time();
     for (int i = 0; i < pl->nodes_n; i++)  {
       debug_pipe *debug = pl->nodes[pl->sort[i]]->debug;
       debug_pipe_start_timer(debug);
@@ -267,9 +268,6 @@ int pipeline_run(pipeline* pl)  {
       }
       debug_pipe_stop_timer(debug);     
       double pipe_time = debug_pipe_time(debug);
-      if (pipe_time > 0)  {
-        pipeline_time += pipe_time;
-      }
       printf("pipe %d ran in %fs\n", pl->sort[i], pipe_time);
     }
     if (pl->loop == 0)  {
@@ -278,26 +276,25 @@ int pipeline_run(pipeline* pl)  {
     else if (pl->loop > 0)  {
       pl->loop--;
     }
-    //TODO actually time instead  
+    double pipeline_time = get_clock_time() - pipeline_time_before;
     printf("pipeline ran in %fs\n", pipeline_time);
-  /*  double lag = interval - pipeline_time;
+    double lag = interval - pipeline_time;
     if ((pl->loop != 0) && (lag > 0))  {
       printf("sleeping for %fs\n\n", lag);
-      usleep(lag*1000000);
-    printf("done\n");
+      usleep((int)(lag*1000000));
     }
     else  {
       printf("\n");
     }
-    */
   }
   //print pipe averages run times
   for (int i = 0; i < pl->nodes_n; i++)  {
     double pipe_average_time = debug_pipe_average_time(pl->nodes[pl->sort[i]]->debug);
     fprintf(stdout, "pipe %d average run time: %fs\n", i, pipe_average_time);
   }
-  double time_after = get_clock_time();
-  fprintf(stdout, "total time %fs\n", time_after - time_before);
+  //print total run time
+  double total_time = get_clock_time() - total_time_before;
+  fprintf(stdout, "total run time: %fs\n", total_time);
 
   return 1;
 }
