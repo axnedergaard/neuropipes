@@ -33,6 +33,7 @@ data* data_create(int n, int *shape, int *stride)  {
     fprintf(stderr, "data_create: failed to allocate memory for buffer\n");
   }
 //  printf("created data with %d %d\n", d->shape[0], d->shape[1]);
+  pthread_mutex_init(&d->mutex, NULL);
   return d;
 }
 
@@ -105,6 +106,7 @@ data *data_create_real_from_complex(data *input)  {
 }
 
 int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
+  pthread_mutex_lock(&d->mutex);
   int c = d->shape[0];
   int n = d->shape[1];
   for (int i = 0; i < c; i++)  {
@@ -113,10 +115,12 @@ int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
       buf[i*n*2 + j*2] = real; //2*j because real->complex
     }
   }
+  pthread_mutex_unlock(&d->mutex);
   return 1;
 }
 
 int data_copy_to_data_complex_to_real(data *d, double *buf)  {
+  pthread_mutex_lock(&d->mutex);
   int c = d->shape[0];
   int n = d->shape[1];
   for (int i = 0; i < c; i++)  {
@@ -125,10 +129,12 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {
       d->buffer[i*n + j] = real;  //ignore complex values
     }
   }
+  pthread_mutex_unlock(&d->mutex);
   return 1;
 }
 
 int data_copy_to_data(data *d, double *buf)  {
+  pthread_mutex_lock(&d->mutex);
   int len = 1;
   for (int i = 0; i < d->n; i++)  {
     len *= d->shape[i];
@@ -137,10 +143,12 @@ int data_copy_to_data(data *d, double *buf)  {
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
   }
+  pthread_mutex_unlock(&d->mutex);
   return 1;
 }
 
 int data_copy_from_data(data *d, double *buf)  {
+  pthread_mutex_lock(&d->mutex);
   int len = 1;
   for (int i = 0; i < d->n; i++)  {
     len *= d->shape[i];
@@ -148,10 +156,12 @@ int data_copy_from_data(data *d, double *buf)  {
   for (int i = 0; i < len; i++)  {
     buf[i] = d->buffer[i];
   }
+  pthread_mutex_unlock(&d->mutex);
   return 1; 
 }
 
 int data_write(data *d, FILE* f)  { 
+  pthread_mutex_lock(&d->mutex);
   int c = d->shape[0];
   int n = d->shape[1];
   for (int i = 0; i < c; i++)  {
@@ -161,9 +171,11 @@ int data_write(data *d, FILE* f)  {
     }
     fprintf(f, "\n");
   }
+  pthread_mutex_unlock(&d->mutex);
   return 1;
 }
 
 int data_read(data *d, FILE* f)  {
+  //TODO
   return 1;
 }

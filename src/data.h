@@ -2,6 +2,7 @@
 #define DATA_H
 
 #include <stdio.h>
+#include <pthread.h>
 
 #define TYPE_REAL 0
 #define TYPE_COMPLEX 1
@@ -15,6 +16,7 @@ struct data {
   int n; //number of dimensions
   int *shape; //sizes of each dimensions
   int *stride;  //strides of each dimension
+  pthread_mutex_t mutex;
 };
 
 int data_get_type(data*);  //get type (e.g. real or complex) from data
