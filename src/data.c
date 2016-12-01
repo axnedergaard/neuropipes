@@ -29,7 +29,7 @@ data* data_create(int n, int *shape, int *stride)  {
     }
     d->len *= shape[i];
   }
-  if ((d->buffer = (float*)malloc(sizeof(float)*d->len)) == NULL)  {
+  if ((d->buffer = (double*)malloc(sizeof(double)*d->len)) == NULL)  {
     fprintf(stderr, "data_create: failed to allocate memory for buffer\n");
   }
 //  printf("created data with %d %d\n", d->shape[0], d->shape[1]);
@@ -58,6 +58,10 @@ int data_destroy(data *d)  {
   free(d);
   return 1;
 } 
+
+int data_size(data *d)  {  //returns size of buffer in memory TODO possible to use sizeof(buffer) instead?
+  return d->len*sizeof(double);
+}
 
 int data_get_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
   if (d->stride[d->n-1] > 1)  {

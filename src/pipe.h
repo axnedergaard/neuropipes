@@ -4,6 +4,7 @@
 #include "data.h"
 #include "linkedlist.h"
 #include "debug_pipe.h"
+#include "concurrent_pipe.h"
 
 typedef struct pipe pipe_;  //poor solution to unistd.h name clash
 struct pipe {
@@ -13,8 +14,9 @@ struct pipe {
   void* auxiliary; //auxiliary data structure, e.g. for emokit 
   void* buffer;  //buffers used during runtime
   int(*init)(pipe_*, linkedlist*);
-  int(*run)(pipe_*, linkedlist*); 
-  //destructors?? TODO
+  int(*run)(pipe_*, linkedlist*);
+  int concurrent; 
+  concurrent_pipe *concurrent_pipe;
   debug_pipe *debug; 
 };
 
@@ -24,5 +26,7 @@ void pipe_set_id(pipe_*, int);
 int pipe_get_id(pipe_*);
 int pipe_run(pipe_*, linkedlist*);  
 int pipe_init(pipe_*, linkedlist*);  
+void pipe_set_concurrent(pipe_*, int);
+int pipe_get_concurrent(pipe_*);
 
 #endif

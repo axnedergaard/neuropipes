@@ -73,6 +73,8 @@ pipeline* pipeline_create()  {
     pl->sort[i] = -1;  //-1 = invalid
   }
 
+  pl->loop = 1;
+
   piperegistry_init();
 
   return pl;
@@ -162,8 +164,8 @@ int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working
   return 1;
 }
 
-int pipeline_insert(pipeline* pl, char* type)  {
-  pipe_* p = build_pipe(type);
+int pipeline_insert(pipeline* pl, char* type, int concurrent)  {
+  pipe_* p = build_pipe(type, concurrent);
 
   pipe_set_id(p, next_id++);
 
@@ -239,7 +241,11 @@ int pipeline_init(pipeline* pl)  {
   //pipe_s are now sorted 
   for (int i = 0; i < pl->nodes_n; i++)  {
   //  printf("initing pipe_ %p\n", pl->nodes[pl->sort[i]]);
-    if (pipe_init(pl->nodes[pl->sort[i]], pl->in_data[pl->sort[i]]) != 1)  {
+    linkedlist* in_data = pl->in_data[pl->sort[i]];
+    if (pipe_get_concurrent(pl->nodes[pl->sort[i]]) == 1)  {  //ignore in data for concurrent pipes
+      in_data = NULL;
+    }
+    if (pipe_init(pl->nodes[pl->sort[i]], in_data) != 1)  {
       fprintf(stderr, "pipeline_init: failed to init pipe %d\n", pl->sort[i]); 
       return 0;
     }
@@ -270,10 +276,10 @@ int pipeline_run(pipeline* pl)  {
       double pipe_time = debug_pipe_time(debug);
       printf("pipe %d ran in %fs\n", pl->sort[i], pipe_time);
     }
-    if (pl->loop == 0)  {
+    if (pl->loop == 1)  {
       quit = 1;
     }
-    else if (pl->loop > 0)  {
+    else if (pl->loop > 1)  {
       pl->loop--;
     }
     double pipeline_time = get_clock_time() - pipeline_time_before;
@@ -290,7 +296,7 @@ int pipeline_run(pipeline* pl)  {
   //print pipe averages run times
   for (int i = 0; i < pl->nodes_n; i++)  {
     double pipe_average_time = debug_pipe_average_time(pl->nodes[pl->sort[i]]->debug);
-    fprintf(stdout, "pipe %d average run time: %fs\n", i, pipe_average_time);
+    fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(pl->nodes[pl->sort[i]]->debug));
   }
   //print total run time
   double total_time = get_clock_time() - total_time_before;

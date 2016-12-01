@@ -10,5 +10,7 @@ int debug_pipe_start_timer(debug_pipe*);
 int debug_pipe_stop_timer(debug_pipe*);
 double debug_pipe_time(debug_pipe*);
 double debug_pipe_average_time(debug_pipe*);
+void debug_pipe_increment_times_run(debug_pipe*);
+int debug_pipe_get_times_run(debug_pipe*);
 
 #endif

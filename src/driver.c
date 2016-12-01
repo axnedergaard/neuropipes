@@ -4,7 +4,7 @@
 
 static int next = 0;
 void insert_next(pipeline *pl, char *pipe)  {
-  pipeline_insert(pl, pipe);
+  pipeline_insert(pl, pipe, 0);
   if (next > 0)  {
     pipeline_insert_edge(pl, next-1, next);
   }
@@ -18,7 +18,9 @@ int main(int argc, char **argv)  {
     pipeline_set_loop(pl, atoi(argv[1]));
   }
   
-  insert_next(pl, "DUMMYEMOTIV");
+  pipeline_insert(pl, "DUMMYEMOTIVCON", 1);
+  next++;
+ // insert_next(pl, "DUMMYEMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
   insert_next(pl, "PRINT"); 

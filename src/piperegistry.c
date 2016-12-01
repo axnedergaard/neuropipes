@@ -67,7 +67,7 @@ linkedlist* piperegistry_get_valid_inputs(char *name)  {
   return NULL;
 }
 
-pipe_* build_pipe(char *name)  {  //move somewhere else? pipefactory-like...
+pipe_* build_pipe(char *name, int concurrent)  {  //move somewhere else? pipefactory-like...
   pipedes* pd = (pipedes*)hashtable_lookup(ht, name);
   if (pd == NULL)  {
     fprintf(stderr, "create_pipe: failed to lookup name %s\n", name);
@@ -76,5 +76,7 @@ pipe_* build_pipe(char *name)  {  //move somewhere else? pipefactory-like...
   pipe_* p = pipe_create();  //TODO check alloc
   p->init = pd->init;
   p->run = pd->run;
+  p->concurrent = concurrent;  //TODO proper
+  
   return p;
 }

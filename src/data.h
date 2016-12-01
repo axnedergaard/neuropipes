@@ -10,7 +10,7 @@
 //number of elements in dimension i is shape(i)/stride(i) where 1 <= stride(i) <= shape(i)
 typedef struct data data;
 struct data {
-  float *buffer;  //memory
+  double *buffer;  //memory
   int len; //length
   int n; //number of dimensions
   int *shape; //sizes of each dimensions
@@ -18,6 +18,7 @@ struct data {
 };
 
 int data_get_type(data*);  //get type (e.g. real or complex) from data
+int data_size(data*);
 data *data_create(int, int*, int*);
 data *data_create_from_string(char*);
 data *data_create_complex_from_real(data*);

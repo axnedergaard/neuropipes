@@ -12,6 +12,7 @@ struct time_interval {
 
 struct debug_pipe {
   linkedlist *time_intervals;
+  int times_run;
 };
 
 debug_pipe *debug_pipe_create()  {
@@ -25,6 +26,7 @@ debug_pipe *debug_pipe_create()  {
     free(d);
     return NULL;
   }
+  d->times_run = 0;
   return d;
 }
 
@@ -76,4 +78,12 @@ double debug_pipe_average_time(debug_pipe *d)  {
     return average;
   }
   return -1;   
+}
+
+void debug_pipe_increment_times_run(debug_pipe *d)  {
+  d->times_run++;
+}
+
+int debug_pipe_get_times_run(debug_pipe *d)  {
+  return d->times_run;
 }
