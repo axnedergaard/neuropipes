@@ -87,7 +87,7 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
           concurrent_pipe_start(pp, (void*)p);  //start thread
         }
         while (concurrent_pipe_get_buffer_ready(pp) == 0)  {  //wait for buffer to be ready
-          //wait TODO
+          pthread_cond_wait(concurrent_pipe_cond(pp), concurrent_pipe_mutex(pp)); //wait
         }
         p->status = 1; //ran
         return 1;
