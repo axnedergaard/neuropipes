@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pipeline.h"
+#include <sys/resource.h>
+#include <sys/syscall.h>
+#include <pthread.h>
+#include <unistd.h>
 
 static int next = 0;
 void insert_next(pipeline *pl, char *pipe)  {
@@ -23,7 +27,7 @@ int main(int argc, char **argv)  {
  // insert_next(pl, "DUMMYEMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "PRINT"); 
+  insert_next(pl, "WRITEFILE"); 
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

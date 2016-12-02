@@ -293,10 +293,16 @@ int pipeline_run(pipeline* pl)  {
       printf("\n");
     }
   }
-  //print pipe averages run times
+  
+  //kill concurrent pipes, print pipe averages run times
   for (int i = 0; i < pl->nodes_n; i++)  {
-    double pipe_average_time = debug_pipe_average_time(pl->nodes[pl->sort[i]]->debug);
-    fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(pl->nodes[pl->sort[i]]->debug));
+    pipe_* p = pl->nodes[pl->sort[i]];
+    if (p->concurrent == 1)  {  //concurrent, kill
+      concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop
+      pthread_join(*(concurrent_pipe_thread(p->concurrent_pipe)), NULL); //wait for thread to stop
+    }
+    double pipe_average_time = debug_pipe_average_time(p->debug);
+    fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(p->debug));
   }
   //print total run time
   double total_time = get_clock_time() - total_time_before;

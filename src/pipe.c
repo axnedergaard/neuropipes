@@ -49,7 +49,6 @@ void pipe_set_concurrent(pipe_* p, int concurrent)  {
 }
 
 int pipe_get_concurrent(pipe_* p)  {
-  fprintf(stdout, "concurrent=%d\n", p->concurrent);
   return p->concurrent;
 }
 
