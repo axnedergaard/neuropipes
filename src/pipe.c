@@ -61,6 +61,17 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
             if (p->concurrent_pipe == NULL)  {
               fprintf(stderr, "pipe_init: failed to create concurrent pipe\n");
             }
+            data_make_blocking(p->output);  //make out data blocking
+          }
+          else  {  //increment readers for every input pipe (can skip concurrent pipes since they have no inputs)
+            data **data_ptr = NULL;
+            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
+              data *d = *data_ptr;
+              if (data_blocking(d))  {
+                printf("incrementing readers\n");
+                data_increment_readers(d); 
+              }
+            }
           }
           p->status = 0;  //inited
           return 1;
@@ -85,9 +96,9 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
         if (concurrent_pipe_started(pp) == 0)  {  //thread not started
           concurrent_pipe_start(pp, (void*)p);  //start thread
         }
-        while (concurrent_pipe_get_buffer_ready(pp) == 0)  {  //wait for buffer to be ready
-          pthread_cond_wait(concurrent_pipe_cond(pp), concurrent_pipe_mutex(pp)); //wait
-        }
+        //while (data_ready(p->output) == 0)  {  //wait for buffer to be ready
+        //  pthread_cond_wait(&(p->output)->cond_written, &(p->output)->mutex); //wait TODO mutex??
+        //}
         p->status = 1; //ran
         return 1;
       }

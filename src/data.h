@@ -16,16 +16,34 @@ struct data {
   int n; //number of dimensions
   int *shape; //sizes of each dimensions
   int *stride;  //strides of each dimension
+  //blocking params, make into struct? TODO
+  int blocking;
   pthread_mutex_t mutex;
+  pthread_cond_t cond_written;
+  pthread_cond_t cond_read;
+  int writes;  //TODO better naming?
+  int reads;
+  int readers;
 };
 
 int data_get_type(data*);  //get type (e.g. real or complex) from data
 int data_size(data*);
+int data_ready(data*);
+int data_blocking(data*);
+void data_broadcast_read(data*);
 data *data_create(int, int*, int*);
 data *data_create_from_string(char*);
 data *data_create_complex_from_real(data*);
 data *data_create_real_from_complex(data*);
+int data_make_blocking(data*);
+int data_make_nonblocking(data*);
+void data_reset_reads(data*);
+void data_increment_reads(data*);
+void data_increment_readers(data*);
+void data_reset_readers(data*);
 int data_destroy(data*);
+int data_copy_from_data_blocking(data*, double*);
+int data_copy_to_data_blocking(data*, double*);
 int data_copy_from_data(data*, double*);
 int data_copy_to_data(data*, double*);
 int data_copy_to_data_complex_to_real(data*, double*);

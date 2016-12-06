@@ -6,11 +6,6 @@
 #include <unistd.h>
 
 int dummyemotivconcurrent_init(pipe_* p, linkedlist* l)  {
-  if (l != NULL)  {
-    fprintf(stderr, "dummpemoinpcon_init: concurrent pipe cannot have any inputs\n");
-    return -1;
-  }
-  
   p->output = data_create_from_string("EMOTIV");
 
   p->auxiliary = (double*)malloc(data_size(p->output));

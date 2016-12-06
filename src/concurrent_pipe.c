@@ -9,21 +9,20 @@
 struct concurrent_pipe {
   pthread_t thread;
   int started;
-  int buffer_ready;
+  int stop;
+  //int buffer_ready;
   //mutex and cond for buffer_ready
-  pthread_mutex_t mutex;
-  pthread_cond_t cond;
+//  pthread_mutex_t mutex;
+  //pthread_cond_t cond;
 };
 
 void *concurrent_pipe_run(void *pipe)  {
   pipe_ *p = (pipe_*)pipe;
-  while (concurrent_pipe_started(p->concurrent_pipe) == 1)  {
+  concurrent_pipe *pp = p->concurrent_pipe;
+  while (pp->started == 1) {
     p->run(p, NULL); //assume concurrent pipe has no inputs
-    concurrent_pipe_set_buffer_ready((concurrent_pipe*)((pipe_*)pipe)->concurrent_pipe, 1);
-    pthread_cond_broadcast(&p->concurrent_pipe->cond);
     debug_pipe_increment_times_run(p->debug);  //DEBUG
   }
-  pthread_cond_broadcast(&p->concurrent_pipe->cond);
   return NULL;
 }
 
@@ -34,9 +33,9 @@ concurrent_pipe *concurrent_pipe_create()  {
     return NULL;
   }
   pp->started = 0;
-  pp->buffer_ready = 0;
-  pthread_mutex_init(&pp->mutex, NULL);
-  pthread_cond_init(&pp->cond, NULL);
+  //pp->buffer_ready = 0;
+  //pthread_mutex_init(&pp->mutex, NULL);
+  //pthread_cond_init(&pp->cond, NULL);
 
   return pp;  
 }
@@ -70,14 +69,14 @@ int concurrent_pipe_start(concurrent_pipe *pp, void* pipe)  {
 */
   return 1;
 }
-
+/*
 pthread_cond_t *concurrent_pipe_cond(concurrent_pipe *pp)  {
   return &pp->cond;
 }
 
 pthread_mutex_t *concurrent_pipe_mutex(concurrent_pipe *pp)  {
   return &pp->mutex;
-}
+}*/
 
 pthread_t *concurrent_pipe_thread(concurrent_pipe *pp)  {
   return &pp->thread;
@@ -86,11 +85,11 @@ pthread_t *concurrent_pipe_thread(concurrent_pipe *pp)  {
 int concurrent_pipe_started(concurrent_pipe *pp)  {
   return pp->started;
 }
-
+/*
 int concurrent_pipe_set_buffer_ready(concurrent_pipe *pp, int ready)  {
   return pp->buffer_ready = ready;
 }
 
 int concurrent_pipe_get_buffer_ready(concurrent_pipe *pp)  {
   return pp->buffer_ready;
-}
+}*/

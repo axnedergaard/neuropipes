@@ -7,15 +7,11 @@
 struct auxiliary_emokit  {
   struct emokit_frame frame;
   struct emokit_device* device;
+  double *buffer;
  // struct emokit_contact_quality quality;
 };
 
 int emotiv_init(pipe_* p, linkedlist* l)  {
-  if (linkedlist_size(l) > 0)  {
-    fprintf(stderr, "emoinp_init: pipe_ cannot have any inputs\n");
-    return -1;
-  }
-
   p->output = data_create_from_string("EMOTIV");
 
   //init auxiliary structure
@@ -30,6 +26,7 @@ int emotiv_init(pipe_* p, linkedlist* l)  {
     fprintf(stderr, "init_emoinp: could not open emokit\n");
     return -1;
   }
+  auxiliary->buffer = (double*)malloc(data_size(p->output));
   p->auxiliary = auxiliary;
 
   return 1;
@@ -39,13 +36,14 @@ int emotiv_run(pipe_* p)  {
   //printf("running emoinp\n");
   struct emokit_frame frame = (struct emokit_frame)((struct auxiliary_emokit*)p->auxiliary)->frame;
   struct emokit_device *device = (struct emokit_device*)((struct auxiliary_emokit*)p->auxiliary)->device;
+  double *buffer = (double*)((struct auxiliary_emokit*)p->auxiliary)->buffer;
 
   for (int i = 0; i < p->output->shape[1]; i++)  {
     int read;
     if ((read = emokit_read_data_timeout(device, 1000)) > 0)  {
       frame = emokit_get_next_frame(device);
       for (int j = 0; j < p->output->shape[0]; j++)  {
-        p->output->buffer[j*p->output->shape[1]+i] = *(&frame.F3 + j);
+        buffer[j*p->output->shape[1]+i] = *(&frame.F3 + j);
       }
     }
     else if (read == 0)  {
@@ -57,6 +55,7 @@ int emotiv_run(pipe_* p)  {
       return -1;
     }
   }
+  data_copy_to_data(p->output, buffer);
 //  emokit_close(device);
 //  emokit_delete(device);
  

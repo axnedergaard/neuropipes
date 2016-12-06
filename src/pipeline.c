@@ -242,7 +242,8 @@ int pipeline_init(pipeline* pl)  {
   for (int i = 0; i < pl->nodes_n; i++)  {
   //  printf("initing pipe_ %p\n", pl->nodes[pl->sort[i]]);
     linkedlist* in_data = pl->in_data[pl->sort[i]];
-    if (pipe_get_concurrent(pl->nodes[pl->sort[i]]) == 1)  {  //ignore in data for concurrent pipes
+    int concurrent = pipe_get_concurrent(pl->nodes[pl->sort[i]]);
+    if (concurrent == 1)  {  //ignore in data for concurrent pipes
       in_data = NULL;
     }
     if (pipe_init(pl->nodes[pl->sort[i]], in_data) != 1)  {
@@ -298,7 +299,9 @@ int pipeline_run(pipeline* pl)  {
   for (int i = 0; i < pl->nodes_n; i++)  {
     pipe_* p = pl->nodes[pl->sort[i]];
     if (p->concurrent == 1)  {  //concurrent, kill
-      concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop
+      printf("killing pipes\n"); 
+      concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop thread
+      data_make_nonblocking(p->output);  //prevent data from keeping thread alive
       pthread_join(*(concurrent_pipe_thread(p->concurrent_pipe)), NULL); //wait for thread to stop
     }
     double pipe_average_time = debug_pipe_average_time(p->debug);
