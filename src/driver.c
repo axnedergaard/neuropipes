@@ -22,10 +22,11 @@ int main(int argc, char **argv)  {
     pipeline_set_loop(pl, atoi(argv[1]));
   }
   
-  pipeline_insert(pl, "DUMMYEMOTIVCON", 1);
+  pipeline_insert(pl, "EMOTIV", 1);
+  //pipeline_insert(pl, "DUMMYEMOTIV", 1);
   next++;
- // insert_next(pl, "EMOTIV");
   insert_next(pl, "FOURIERTRANSFORM");
+//  insert_next(pl, "ALPHABANDPASS");
   insert_next(pl, "INVERSEFOURIERTRANSFORM");
   insert_next(pl, "PRINT"); 
 
