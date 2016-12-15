@@ -26,7 +26,7 @@ struct data {
   int readers;
 };
 
-int data_get_type(data*);  //get type (e.g. real or complex) from data
+int data_type(data*);  //get type (e.g. real or complex) from data
 int data_size(data*);
 int data_ready(data*);
 int data_blocking(data*);
@@ -35,8 +35,13 @@ data *data_create(int, int*, int*);
 data *data_create_from_string(char*);
 data *data_create_complex_from_real(data*);
 data *data_create_real_from_complex(data*);
+data *data_create_from(data*);
 int data_make_blocking(data*);
-int data_make_nonblocking(data*);
+int data_unblock(data*);
+void read_lock(data*);
+void write_lock(data*);
+void read_unlock(data*);
+void write_unlock(data*);
 void data_reset_reads(data*);
 void data_increment_reads(data*);
 void data_increment_readers(data*);

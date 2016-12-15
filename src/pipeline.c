@@ -299,9 +299,8 @@ int pipeline_run(pipeline* pl)  {
   for (int i = 0; i < pl->nodes_n; i++)  {
     pipe_* p = pl->nodes[pl->sort[i]];
     if (p->concurrent == 1)  {  //concurrent, kill
-      printf("killing pipes\n"); 
       concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop thread
-      data_make_nonblocking(p->output);  //prevent data from keeping thread alive
+      data_unblock(p->output);  //prevent data from keeping thread alive
       pthread_join(*(concurrent_pipe_thread(p->concurrent_pipe)), NULL); //wait for thread to stop
     }
     double pipe_average_time = debug_pipe_average_time(p->debug);

@@ -12,12 +12,11 @@ struct buffer_fouriertransform {
 };
 
 int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
-  data* input = *(data**)linkedlist_iterate(l); 
+  data* input = *(data**)linkedlist_head(l); 
   if (input == NULL)  {
     fprintf(stderr, "inversefouriertransform_init: pipe_ must have 1 input\n");
     return 0;
   }
-  linkedlist_reset_iterater(l);
   
   p->output = data_create_real_from_complex(input);
 

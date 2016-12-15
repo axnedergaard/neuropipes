@@ -64,7 +64,7 @@ void data_increment_readers(data *d)  {
   d->readers++;
 }
 
-int data_make_nonblocking(data *d)  {
+int data_unblock(data *d)  {
   pthread_mutex_lock(&d->mutex);
   d->readers = 0;
   d->reads = 0;
@@ -78,6 +78,36 @@ int data_make_nonblocking(data *d)  {
 
 void data_reset_readers(data *d)  {  //to allow killed thread to finish without waiting for data to be read
   d->readers = 0;
+}
+
+void read_lock(data *d)  {
+  pthread_mutex_lock(&d->mutex);
+  while (d->writes == 0)  {
+    pthread_cond_wait(&d->cond_written, &d->mutex);
+  }
+}
+
+void write_lock(data *d)  {
+  pthread_mutex_lock(&d->mutex);
+  while ((d->writes > 0)  && (d->reads < d->readers))  {
+    pthread_cond_wait(&d->cond_read, &d->mutex);
+  } 
+}
+
+void write_unlock(data *d)  {
+  d->reads = 0;
+  d->writes++;
+  pthread_cond_broadcast(&d->cond_written);
+  pthread_mutex_unlock(&d->mutex);
+}
+
+void read_unlock(data *d)  {
+  d->reads++;
+  if (d->reads >= d->readers)  {
+    d->writes = 0;
+    pthread_cond_broadcast(&d->cond_read);
+  }
+  pthread_mutex_unlock(&d->mutex); 
 }
 
 data* data_create_from_string(char *str)  {
@@ -107,7 +137,7 @@ int data_size(data *d)  {  //returns size of buffer in memory TODO possible to u
   return d->len*sizeof(double);
 }
 
-int data_get_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
+int data_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
   if (d->stride[d->n-1] > 1)  {
     return TYPE_COMPLEX;
   }
@@ -158,15 +188,25 @@ data *data_create_real_from_complex(data *input)  {
   return output;
 }
 
+data *data_create_from(data *input)  {
+  data *output = NULL;
+  int n = input->n;
+  int shape[n];
+  int stride[n];
+  for (int i = 0; i < n; i++)  {
+    shape[i] = input->shape[i];
+    stride[i] = input->stride[i];
+  }
+  output = data_create(n, shape, stride);
+  return output;
+}
+
 int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
   int c = d->shape[0];
   int n = d->shape[1];
  
   if (d->blocking == 1)  {
-    pthread_mutex_lock(&d->mutex);
-    while (d->writes == 0)  {
-      pthread_cond_wait(&d->cond_written, &d->mutex);
-    }
+    read_lock(d);
   }
  
   for (int i = 0; i < c; i++)  {
@@ -176,12 +216,7 @@ int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
   }
   
   if (d->blocking == 1)  {
-    d->reads++;
-    if (d->reads >= d->readers)  {
-      d->writes = 0;
-      pthread_cond_broadcast(&d->cond_read);
-    }
-    pthread_mutex_unlock(&d->mutex);
+    read_unlock(d);
   }
 
   return 1;
@@ -192,10 +227,7 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {  //TODO blocking
   int n = d->shape[1];
 
   if (d->blocking == 1)  {
-    pthread_mutex_lock(&d->mutex);
-    while ((d->writes > 0)  && (d->reads < d->readers))  {
-      pthread_cond_wait(&d->cond_read, &d->mutex);
-    } 
+    write_lock(d);
   }
 
   for (int i = 0; i < c; i++)  {
@@ -205,10 +237,7 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {  //TODO blocking
   }
 
   if (d->blocking == 1)  {
-    d->reads = 0;
-    d->writes++;
-    pthread_cond_broadcast(&d->cond_written);
-    pthread_mutex_unlock(&d->mutex);
+    write_unlock(d);
   }
 
   return 1;
@@ -221,10 +250,7 @@ int data_copy_to_data(data *d, double *buf)  {
   }
 
   if (d->blocking == 1)  {
-    pthread_mutex_lock(&d->mutex);
-    while ((d->writes > 0)  && (d->reads < d->readers))  {
-      pthread_cond_wait(&d->cond_read, &d->mutex);
-    } 
+    write_lock(d);
   }
 
   for (int i = 0; i < len; i++)  {
@@ -232,11 +258,9 @@ int data_copy_to_data(data *d, double *buf)  {
   }
 
   if (d->blocking == 1)  {
-    d->reads = 0;
-    d->writes++;
-    pthread_cond_broadcast(&d->cond_written);
-    pthread_mutex_unlock(&d->mutex);
+    write_unlock(d);
   }
+  
   return 1;
 }
 
@@ -247,25 +271,17 @@ int data_copy_from_data(data *d, double *buf)  {
   }
 
   if (d->blocking == 1)  {
-    pthread_mutex_lock(&d->mutex);
-    while (d->writes == 0)  {
-      pthread_cond_wait(&d->cond_written, &d->mutex);
-    }
+    read_lock(d);
   }
 
   for (int i = 0; i < len; i++)  {
     buf[i] = d->buffer[i];
+    //buf + i*8) = d->buffer[i];
   }
   
   if (d->blocking == 1)  {
-    d->reads++;
-    if (d->reads >= d->readers)  {
-      d->writes = 0;
-      pthread_cond_broadcast(&d->cond_read); 
-    }
-    pthread_mutex_unlock(&d->mutex);
+    read_unlock(d);
   }
-
   return 1; 
 }
 
@@ -274,10 +290,7 @@ int data_write(data *d, FILE* f)  {
   int n = d->shape[1];
 
   if (d->blocking == 1)  {
-    pthread_mutex_lock(&d->mutex);
-    while (d->writes == 0)  {
-      pthread_cond_wait(&d->cond_written, &d->mutex);
-    }
+    read_lock(d);
   }
 
   for (int i = 0; i < c; i++)  {
@@ -289,12 +302,7 @@ int data_write(data *d, FILE* f)  {
   }
 
   if (d->blocking == 1)  {
-    d->reads++;
-    if (d->reads >= d->readers)  {
-      d->writes = 0;
-      pthread_cond_broadcast(&d->cond_read); 
-    }
-    pthread_mutex_unlock(&d->mutex);
+    read_unlock(d);
   }
 
   return 1;
