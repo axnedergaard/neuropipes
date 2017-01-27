@@ -16,12 +16,9 @@ int writefile_run(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_iterate(l);
   linkedlist_reset_iterater(l);
 
-  char *filestring = "output.txt";
-  FILE *f = fopen(filestring, "w");
-
-  data_write(input, f);
-
-  fclose(f); 
+  char *filename = "recording.edf";
+  data_write_edf(input, filename);  
+  //data_write(input, f);
   
   return 1; 
 }

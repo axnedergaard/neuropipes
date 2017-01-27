@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "edflib.h"
 
 data* data_create(int n, int *shape, int *stride)  {
   data *d = (data*)malloc(sizeof(data));
@@ -115,7 +116,7 @@ data* data_create_from_string(char *str)  {
     return data_create(0, NULL, NULL);
   }
   else if (strcmp(str, "EMOTIV") == 0)  {  //emotiv 14 channels 8 readings
-    int shape[2] = {14, 16};
+    int shape[2] = {14, 128};
     int stride[2] = {1, 1};
     return data_create(2, shape, stride);
   }
@@ -305,6 +306,47 @@ int data_write(data *d, FILE* f)  {
     read_unlock(d);
   }
 
+  return 1;
+}
+
+int data_write_edf(data *d, char* fn)  {
+  int c = d->shape[0];
+  int n = d->shape[1];
+
+  //open edf file
+  int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
+  if (handle < 0)  {
+    fprintf(stderr, "data_write_edf: failed to open file for writing\n");
+  }
+  //set attributes
+  for (int i = 0; i < c; i++)  {
+   if (edf_set_samplefrequency(handle, i, n) != 0)  printf("failed to set sample frequency\n");
+    if (edf_set_physical_maximum(handle, i, 10000) != 0)  printf("failed to set max phy\n");
+    if (edf_set_physical_minimum(handle, i, 0) != 0)  printf("failed to set min phy\n");
+    if (edf_set_digital_maximum(handle, i, 32767) != 0)  printf("failed to max dig\n");
+    if (edf_set_digital_minimum(handle, i, 0) != 0)  printf("failed to set min dig\n");
+  }
+
+  if (d->blocking == 1)  {
+    read_lock(d);
+  }
+
+  for (int i = 0; i < c; i++)  {
+    if (edfwrite_physical_samples(handle, (d->buffer + i*c)) != 0)  {  //stride?
+      fprintf(stderr, "data_write_edf: failed to write to file\n");
+    }
+  }
+
+  edfclose_file(handle);
+
+  if (d->blocking == 1)  {
+    read_unlock(d);
+  }
+
+  return 1;
+}
+
+int data_read_edf(data *d, char* fn)  {
   return 1;
 }
 

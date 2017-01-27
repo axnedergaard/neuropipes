@@ -22,13 +22,14 @@ int main(int argc, char **argv)  {
     pipeline_set_loop(pl, atoi(argv[1]));
   }
   
-  pipeline_insert(pl, "EMOTIV", 1);
-  //pipeline_insert(pl, "DUMMYEMOTIV", 1);
-  next++;
-  insert_next(pl, "FOURIERTRANSFORM");
-//  insert_next(pl, "ALPHABANDPASS");
-  insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "PRINT"); 
+//  pipeline_insert(pl, "EMOTIV", 1);
+ // pipeline_insert(pl, "DUMMYEMOTIV", 1);
+  //next++;
+  insert_next(pl, "DUMMYEMOTIV");
+//  insert_next(pl, "FOURIERTRANSFORM");
+//insert_next(pl, "ALPHABANDPASS");
+//  insert_next(pl, "INVERSEFOURIERTRANSFORM");
+  insert_next(pl, "WRITEFILE"); 
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");
