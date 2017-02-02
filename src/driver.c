@@ -27,9 +27,10 @@ int main(int argc, char **argv)  {
   //next++;
   insert_next(pl, "DUMMYEMOTIV");
 //  insert_next(pl, "FOURIERTRANSFORM");
-//insert_next(pl, "ALPHABANDPASS");
+  insert_next(pl, "ALPHABANDPASS");
 //  insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "WRITEFILE"); 
+//  insert_next(pl, "WRITEFILE"); 
+  insert_next(pl, "PRINT");
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

@@ -126,6 +126,31 @@ data* data_create_from_string(char *str)  {
   } 
 }
 
+data *data_create_from_edf(char *filename, int* cp, int *np, int *setp)  {  //TODO
+  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
+  if (edfopen_file_readonly(filename, hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
+    fprintf(stderr, "data_create_from_edf: failed to open file\n");
+  } 
+
+  int c = hdr->edfsignals; //number of channelss
+
+  struct edf_param_struct param = hdr->signalparam[0]; //assume same number of samples in every channel
+  int s = param.smp_in_datarecord;  //number of samples
+
+  edfclose_file(hdr->handle);
+
+  int n = 2;  //assume 2 dimensions
+  int shape[n];
+  int stride[n];
+
+  shape[0] = c;
+  shape[1] = s;
+  stride[0] = 1;
+  stride[1] = 1;
+ 
+  return data_create(n, shape, stride);
+}
+
 int data_destroy(data *d)  {
   free(d->buffer);
   free(d->shape);
@@ -256,6 +281,7 @@ int data_copy_to_data(data *d, double *buf)  {
 
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
+  //  printf("copied to %f\n", d->buffer[i]);
   }
 
   if (d->blocking == 1)  {
@@ -297,7 +323,7 @@ int data_write(data *d, FILE* f)  {
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
       float reading = d->buffer[i*n + j];  
-      fprintf(f, "%.0f ", reading);
+      fprintf(f, "%.3f ", reading);
     }
     fprintf(f, "\n");
   }
@@ -346,7 +372,24 @@ int data_write_edf(data *d, char* fn)  {
   return 1;
 }
 
-int data_read_edf(data *d, char* fn)  {
+int data_read_edf(data *d, char* fn)  {  //don't open file every time?
+/*  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
+  if (edfopen_file_readonly("recording.edf", hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
+    fprintf(stderr, "data_read_edf: failed to open file\n"); 
+    return -1;
+  }
+
+  struct edf_param_struct param = hdr->signalparam[signal];
+  int n = param->smp_in_datarecord; //number of samples
+
+  for (int i = 0; i < n; i++)  {
+    if (edfread_physical_samples(hdr->handle, signal, n, (d->buffer + 
+  }
+
+  if (d->blocking == 1)  {
+    read_unlock(d);
+  }
+*/
   return 1;
 }
 

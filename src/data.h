@@ -36,6 +36,7 @@ data *data_create_from_string(char*);
 data *data_create_complex_from_real(data*);
 data *data_create_real_from_complex(data*);
 data *data_create_from(data*);
+data *data_create_from_edf(char*, int*, int*, int*);
 int data_make_blocking(data*);
 int data_unblock(data*);
 void read_lock(data*);
