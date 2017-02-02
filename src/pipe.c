@@ -14,6 +14,7 @@ pipe_* pipe_create()  {
     }
     p->run = NULL;
     p->init = NULL;
+    p->kill = NULL;
     p->output = NULL;
     p->auxiliary = NULL;
     p->buffer = NULL;
@@ -121,3 +122,13 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
   return 0;
 }
 
+int pipe_kill(pipe_ *p, linkedlist *l)  {
+  if (p != NULL)  {
+    if (p->kill != NULL)  {
+      if (p->kill(p, l) != 1)  {
+        fprintf(stderr, "pipe_kill: pipe %p failed to kill\n", p);
+      }
+    }
+  }
+  return 0;
+}

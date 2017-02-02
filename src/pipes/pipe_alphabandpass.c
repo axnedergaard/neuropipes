@@ -78,3 +78,6 @@ int alphabandpass_run(pipe_* p, linkedlist* l)  {
   return 1;
 }
 
+int alphabandpass_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}

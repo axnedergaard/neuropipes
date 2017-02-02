@@ -27,3 +27,6 @@ int mean_run(pipe_ *p, linkedlist *l)  {
   return 1;
 }
 
+int mean_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}

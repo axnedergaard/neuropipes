@@ -62,4 +62,6 @@ int emotiv_run(pipe_* p)  {
   return 1;
 }
 
-
+int emotiv_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}

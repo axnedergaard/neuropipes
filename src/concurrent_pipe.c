@@ -20,7 +20,10 @@ void *concurrent_pipe_run(void *pipe)  {
   pipe_ *p = (pipe_*)pipe;
   concurrent_pipe *pp = p->concurrent_pipe;
   while (pp->started == 1) {
-    p->run(p, NULL); //assume concurrent pipe has no inputs
+  //assume concurrent pipe has no inputs
+    if (p->run(p, NULL) == 0)  {  //pipe finished
+      concurrent_pipe_stop(pp);
+    }
     debug_pipe_increment_times_run(p->debug);  //DEBUG
   }
   return NULL;

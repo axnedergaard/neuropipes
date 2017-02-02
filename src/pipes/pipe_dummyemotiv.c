@@ -25,3 +25,6 @@ int dummyemotiv_run(pipe_* p, linkedlist* l)  {
   return 1; 
 }
 
+int dummyemotiv_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}

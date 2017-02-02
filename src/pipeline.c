@@ -305,6 +305,7 @@ int pipeline_run(pipeline* pl)  {
     }
     double pipe_average_time = debug_pipe_average_time(p->debug);
     fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(p->debug));
+    pipe_kill(p, pl->in_data[pl->sort[i]]);  //TODO check for fail?
   }
   //print total run time
   double total_time = get_clock_time() - total_time_before;

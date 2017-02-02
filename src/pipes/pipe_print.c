@@ -24,3 +24,7 @@ int print_run(pipe_ *p, linkedlist *l)  {
   return 1; 
 }
 
+int print_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}
+

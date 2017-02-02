@@ -335,16 +335,10 @@ int data_write(data *d, FILE* f)  {
   return 1;
 }
 
-int data_write_edf(data *d, char* fn)  {
+int data_edf_open(data *d, char *fn)  {
   int c = d->shape[0];
   int n = d->shape[1];
-
-  //open edf file
   int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
-  if (handle < 0)  {
-    fprintf(stderr, "data_write_edf: failed to open file for writing\n");
-  }
-  //set attributes
   for (int i = 0; i < c; i++)  {
    if (edf_set_samplefrequency(handle, i, n) != 0)  printf("failed to set sample frequency\n");
     if (edf_set_physical_maximum(handle, i, 10000) != 0)  printf("failed to set max phy\n");
@@ -352,6 +346,12 @@ int data_write_edf(data *d, char* fn)  {
     if (edf_set_digital_maximum(handle, i, 32767) != 0)  printf("failed to max dig\n");
     if (edf_set_digital_minimum(handle, i, 0) != 0)  printf("failed to set min dig\n");
   }
+  return handle;
+}
+
+int data_edf_write(data *d, int handle)  {
+  int c = d->shape[0];
+//  int n = d->shape[1];
 
   if (d->blocking == 1)  {
     read_lock(d);
@@ -363,8 +363,6 @@ int data_write_edf(data *d, char* fn)  {
     }
   }
 
-  edfclose_file(handle);
-
   if (d->blocking == 1)  {
     read_unlock(d);
   }
@@ -372,7 +370,7 @@ int data_write_edf(data *d, char* fn)  {
   return 1;
 }
 
-int data_read_edf(data *d, char* fn)  {  //don't open file every time?
+int data_edf_read(data *d, int handle)  {  //don't open file every time?
 /*  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
   if (edfopen_file_readonly("recording.edf", hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
     fprintf(stderr, "data_read_edf: failed to open file\n"); 
@@ -391,6 +389,10 @@ int data_read_edf(data *d, char* fn)  {  //don't open file every time?
   }
 */
   return 1;
+}
+
+int data_edf_close(int handle)  {
+  return (edfclose_file(handle) == 0);
 }
 
 int data_read(data *d, FILE* f)  {

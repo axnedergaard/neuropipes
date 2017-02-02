@@ -80,3 +80,6 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   return 1;
 }
 
+int inversefouriertransform_kill(pipe_* p, linkedlist* l)  {
+  return 1;
+}

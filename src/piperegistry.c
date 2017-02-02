@@ -15,6 +15,7 @@ typedef struct pipedes pipedes;  //pipe description
 struct pipedes  {
   int(*init)(pipe_*, linkedlist*);
   int(*run)(pipe_*, linkedlist*);
+  int(*kill)(pipe_*, linkedlist*);
   char* valid_inputs;  //valid input data, format "NAME1, NAME2, NAME3"
 };
 
@@ -31,7 +32,7 @@ int piperegistry_init()  {  //???
 
 //destroy register?
 
-int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)(pipe_*, linkedlist*), char *valid_inputs)  {
+int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)(pipe_*, linkedlist*), int(*kill)(pipe_*, linkedlist*), char *valid_inputs)  {
   pipedes *pd = (pipedes*)malloc(sizeof(pipedes));
   if (pd == NULL)  {
     fprintf(stderr, "register_pipe: failed to allocate memory\n");
@@ -39,6 +40,7 @@ int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)
   }
   pd->init = init;
   pd->run = run;
+  pd->kill = kill;
   pd->valid_inputs = (char*)malloc(sizeof(char)*strlen(valid_inputs));
   strncpy(pd->valid_inputs, valid_inputs, strlen(valid_inputs));
   if (hashtable_insert(ht,name, (void*)pd) == 0)  {  //name already in table
@@ -76,6 +78,7 @@ pipe_* build_pipe(char *name, int concurrent)  {  //move somewhere else? pipefac
   pipe_* p = pipe_create();  //TODO check alloc
   p->init = pd->init;
   p->run = pd->run;
+  p->kill = pd->kill;
   p->concurrent = concurrent;  //TODO proper
   
   return p;
