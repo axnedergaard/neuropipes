@@ -126,6 +126,7 @@ data* data_create_from_string(char *str)  {
   } 
 }
 
+/*
 data *data_create_from_edf(char *filename, int* cp, int *np, int *setp)  {  //TODO
   struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
   if (edfopen_file_readonly(filename, hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
@@ -150,7 +151,7 @@ data *data_create_from_edf(char *filename, int* cp, int *np, int *setp)  {  //TO
  
   return data_create(n, shape, stride);
 }
-
+*/
 int data_destroy(data *d)  {
   free(d->buffer);
   free(d->shape);
@@ -335,7 +336,7 @@ int data_write(data *d, FILE* f)  {
   return 1;
 }
 
-int data_edf_open(data *d, char *fn)  {
+int data_edf_open_write(data *d, char *fn)  {
   int c = d->shape[0];
   int n = d->shape[1];
   int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
@@ -349,16 +350,30 @@ int data_edf_open(data *d, char *fn)  {
   return handle;
 }
 
+int data_edf_open_read(char *fn, int *c, int *n, int *s)  {  //filename, channels, samples, sets
+  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
+  if (edfopen_file_readonly("recording.edf", hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
+    printf("failed to read file\n");
+  }
+  *c = hdr->edfsignals;
+  struct edf_param_struct sig_par = hdr->signalparam[0];  //assume n and sets is same for all channels
+  *n = sig_par.smp_in_datarecord;
+  *s = sig_par.smp_in_file / sig_par.smp_in_datarecord;
+
+  return hdr->handle;
+}
+
+
 int data_edf_write(data *d, int handle)  {
   int c = d->shape[0];
-//  int n = d->shape[1];
+  int n = d->shape[1];
 
   if (d->blocking == 1)  {
     read_lock(d);
   }
 
   for (int i = 0; i < c; i++)  {
-    if (edfwrite_physical_samples(handle, (d->buffer + i*c)) != 0)  {  //stride?
+    if (edfwrite_physical_samples(handle, (d->buffer + i*n)) != 0)  {  //stride?
       fprintf(stderr, "data_write_edf: failed to write to file\n");
     }
   }
@@ -371,23 +386,23 @@ int data_edf_write(data *d, int handle)  {
 }
 
 int data_edf_read(data *d, int handle)  {  //don't open file every time?
-/*  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
-  if (edfopen_file_readonly("recording.edf", hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
-    fprintf(stderr, "data_read_edf: failed to open file\n"); 
-    return -1;
+  int c = d->shape[0];
+  int n = d->shape[1];
+
+  if (d->blocking == 1)  {
+    write_lock(d);
   }
-
-  struct edf_param_struct param = hdr->signalparam[signal];
-  int n = param->smp_in_datarecord; //number of samples
-
-  for (int i = 0; i < n; i++)  {
-    if (edfread_physical_samples(hdr->handle, signal, n, (d->buffer + 
+  printf("c=%d n=%d\n", c, n);
+  for (int i = 0; i < c; i++)  {
+    if (edfread_physical_samples(handle, i, n, (d->buffer + i*n)) < 0)  {
+      printf("data_edf_read: failed to read samples\n"); 
+    }
   }
 
   if (d->blocking == 1)  {
-    read_unlock(d);
+    write_unlock(d);
   }
-*/
+  
   return 1;
 }
 

@@ -27,12 +27,13 @@ if (argc > 1)  {
 //  pipeline_insert(pl, "EMOTIV", 1);
  // pipeline_insert(pl, "DUMMYEMOTIV", 1);
   //next++;
-  insert_next(pl, "DUMMYEMOTIV");
+  //insert_next(pl, "DUMMYEMOTIV");
 //  insert_next(pl, "FOURIERTRANSFORM");
 //  insert_next(pl, "ALPHABANDPASS");
 //  insert_next(pl, "INVERSEFOURIERTRANSFORM");
-  insert_next(pl, "WRITEFILE"); 
-//  insert_next(pl, "PRINT");
+  //insert_next(pl, "WRITEFILE"); 
+  insert_next(pl, "READFILE");
+  insert_next(pl, "PRINT");
 
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

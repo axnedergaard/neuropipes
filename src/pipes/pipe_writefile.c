@@ -16,7 +16,7 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   p->output = NULL;  //writefile pipe has no output
   struct writefile_aux *aux = (struct writefile_aux*)malloc(sizeof(struct writefile_aux)); 
   char *fn = "recording.edf";
-  aux->handle = data_edf_open(input, fn); 
+  aux->handle = data_edf_open_write(input, fn); 
   p->auxiliary = aux;
   return 1;
 }
