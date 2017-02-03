@@ -94,20 +94,25 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
     if (p->run != NULL)  {
       if (p->concurrent == 1)  {  //concurrent pipe
         concurrent_pipe* pp = p->concurrent_pipe;
+
+        if (concurrent_pipe_done(pp) == 1)  {
+          p->status = 0;
+          //data_unblock(p->output);
+          return 0;
+        }
+
         if (concurrent_pipe_started(pp) == 0)  {  //thread not started
           concurrent_pipe_start(pp, (void*)p);  //start thread
         }
-        //while (data_ready(p->output) == 0)  {  //wait for buffer to be ready
-        //  pthread_cond_wait(&(p->output)->cond_written, &(p->output)->mutex); //wait TODO mutex??
-        //}
+        
         p->status = 1; //ran
         return 1;
       }
       else {
-        if (p->run(p, l) == 1)  {  //non-concurrent pipe, ran succesfully
-          p->status = 1;  //ran
+        int status = p->run(p, l);
+        if (status >= 0)  {  //non-concurrent pipe, ran succesfully
           debug_pipe_increment_times_run(p->debug);  //DEBUG
-          return 1;
+          return status;
         }
         else  {
           fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);

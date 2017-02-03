@@ -46,6 +46,7 @@ int data_make_blocking(data *d)  {  //make data blocking
   d->blocking = 1;
   d->reads = 0;
   d->readers = 0; 
+  d->writes = 0;
   return 1;
 }
 
@@ -69,7 +70,7 @@ int data_unblock(data *d)  {
   pthread_mutex_lock(&d->mutex);
   d->readers = 0;
   d->reads = 0;
-  d->writes = 0;
+  d->writes = 0; //TODO dangerous?
   d->blocking = 0;
   pthread_cond_broadcast(&d->cond_written);
   pthread_cond_broadcast(&d->cond_read);
@@ -83,14 +84,14 @@ void data_reset_readers(data *d)  {  //to allow killed thread to finish without 
 
 void read_lock(data *d)  {
   pthread_mutex_lock(&d->mutex);
-  while (d->writes == 0)  {
+  while ((d->blocking == 1) && (d->writes == 0))  {
     pthread_cond_wait(&d->cond_written, &d->mutex);
   }
 }
 
 void write_lock(data *d)  {
   pthread_mutex_lock(&d->mutex);
-  while ((d->writes > 0)  && (d->reads < d->readers))  {
+  while ((d->blocking == 1) && (d->writes > 0)  && (d->reads < d->readers))  {
     pthread_cond_wait(&d->cond_read, &d->mutex);
   } 
 }
@@ -392,7 +393,6 @@ int data_edf_read(data *d, int handle)  {  //don't open file every time?
   if (d->blocking == 1)  {
     write_lock(d);
   }
-  printf("c=%d n=%d\n", c, n);
   for (int i = 0; i < c; i++)  {
     if (edfread_physical_samples(handle, i, n, (d->buffer + i*n)) < 0)  {
       printf("data_edf_read: failed to read samples\n"); 

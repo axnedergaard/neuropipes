@@ -9,7 +9,7 @@
 struct concurrent_pipe {
   pthread_t thread;
   int started;
-  int stop;
+  int done;
   //int buffer_ready;
   //mutex and cond for buffer_ready
 //  pthread_mutex_t mutex;
@@ -22,7 +22,9 @@ void *concurrent_pipe_run(void *pipe)  {
   while (pp->started == 1) {
   //assume concurrent pipe has no inputs
     if (p->run(p, NULL) == 0)  {  //pipe finished
+      pp->done = 1;
       concurrent_pipe_stop(pp);
+    //  data_unblock(p->output);
     }
     debug_pipe_increment_times_run(p->debug);  //DEBUG
   }
@@ -46,6 +48,10 @@ concurrent_pipe *concurrent_pipe_create()  {
 int concurrent_pipe_destroy(concurrent_pipe *pp)  {
   free(pp);  //??
   return 1;
+}
+
+int concurrent_pipe_done(concurrent_pipe *pp)  {
+  return pp->done;
 }
 
 int concurrent_pipe_stop(concurrent_pipe *pp)  {

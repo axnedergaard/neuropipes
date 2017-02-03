@@ -11,10 +11,6 @@ struct readfile_aux {
 };
 
 int readfile_init(pipe_ *p, linkedlist *l)  {
-  if (linkedlist_size(l) != 0)  {
-    fprintf(stderr, "readfile_init: readfile pipe must have exactly 0 inputs\n");
-  }
- 
   //read header to get dimensions
   int c;
   int n;
@@ -43,15 +39,14 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
 int readfile_run(pipe_ *p, linkedlist *l)  {
   struct readfile_aux *aux = (struct readfile_aux*)p->auxiliary;
 
-  if (aux->current_set >= aux->set_n)  {  //all signals read
-    return 0;
-  }
-
   //read
   data_edf_read(p->output, aux->handle); 
  
   aux->current_set++;
 
+  if (aux->current_set >= aux->set_n)  {  //all signals read
+    return 0;
+  }
   return 1; 
 }
 

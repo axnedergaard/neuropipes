@@ -269,10 +269,18 @@ int pipeline_run(pipeline* pl)  {
     for (int i = 0; i < pl->nodes_n; i++)  {
       debug_pipe *debug = pl->nodes[pl->sort[i]]->debug;
       debug_pipe_start_timer(debug);
-      if (pipe_run(pl->nodes[pl->sort[i]], pl->in_data[pl->sort[i]]) != 1)  {
+      int status = pipe_run(pl->nodes[pl->sort[i]], pl->in_data[pl->sort[i]]);       
+      if (status < 0)  {
         fprintf(stderr, "pipeline_run: failed to run pipe %d\n", pl->sort[i]); 
         return 0;
       }
+      else if (status == 0)  {  //pipe called pipeline termination
+        quit = 1;
+        //if (pipe_get_concurrent(pl->nodes[pl->sort[i]]) == 1)  {  //don't run other pipes if terminating pipes is concurrent TODO BAD??
+        //  break;
+       // }
+      } 
+      
       debug_pipe_stop_timer(debug);     
       double pipe_time = debug_pipe_time(debug);
       printf("pipe %d ran in %fs\n", pl->sort[i], pipe_time);
