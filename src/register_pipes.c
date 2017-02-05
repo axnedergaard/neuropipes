@@ -28,6 +28,10 @@ int writefile_kill(pipe_*, linkedlist*);
 int readfile_init(pipe_*, linkedlist*);
 int readfile_run(pipe_*, linkedlist*);
 int readfile_kill(pipe_*, linkedlist*);
+int writesharedmem_init(pipe_*, linkedlist*);
+int writesharedmem_run(pipe_*, linkedlist*);
+int writesharedmem_kill(pipe_*, linkedlist*);
+
 
 int register_pipes()  {
   piperegistry_register("DUMMYEMOTIV", &dummyemotiv_init, &dummyemotiv_run, &dummyemotiv_kill, "");
@@ -39,5 +43,6 @@ int register_pipes()  {
   piperegistry_register("ALPHABANDPASS", &alphabandpass_init, &alphabandpass_run, &alphabandpass_kill, "");
   piperegistry_register("WRITEFILE", &writefile_init, &writefile_run, &writefile_kill, "");
   piperegistry_register("READFILE", &readfile_init, &readfile_run, &readfile_kill, "");
+  piperegistry_register("WRITESHAREDMEM", &writesharedmem_init, &writesharedmem_run, &writesharedmem_kill, "");
   return 1;
 }

@@ -17,7 +17,7 @@ int dummyemotiv_run(pipe_* p, linkedlist* l)  {
   double *buffer = (double*)p->auxiliary;
   for (int i = 0; i < p->output->shape[0]; i++)  {
     for (int j = 0; j < p->output->shape[1]; j++)  { 
-  //    buffer[i*p->output->shape[1] + j] = i*p->output->shape[1] + j;
+//      buffer[i*p->output->shape[1] + j] = i*p->output->shape[1] + j;
       buffer[i*p->output->shape[1] + j] = rand() % 10000;  //random
     }
   }

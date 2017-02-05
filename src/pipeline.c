@@ -264,7 +264,7 @@ int pipeline_run(pipeline* pl)  {
   double interval = 0;
   double total_time_before = get_clock_time(); 
   //double interval = 1.0;
-  while (quit == 0)  {  //time sync?
+  while (quit == 0)  {  //time sync?  //TODO remove concurrent pipes from main loop but ensure quit communication
     double pipeline_time_before = get_clock_time();
     for (int i = 0; i < pl->nodes_n; i++)  {
       debug_pipe *debug = pl->nodes[pl->sort[i]]->debug;
