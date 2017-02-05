@@ -50,7 +50,13 @@ if (argc > 1)  {
   //pipeline_insert_edge(pl, inv, write); 
 
   insert_next(pl, "DUMMYEMOTIV");
+//  insert_next_concurrent(pl, "EMOTIV");
+  insert_next(pl, "FOURIERTRANSFORM");
+  insert_next(pl, "ALPHABANDPASS");
+  insert_next(pl, "INVERSEFOURIERTRANSFORM");
   insert_next(pl, "WRITESHAREDMEM");
+//  pipeline_insert(pl, "PRINT", 0);
+//  pipeline_insert_edge(pl, 0, 2);
 
 //  insert_next_concurrent(pl, "READFILE");
 //  insert_next(pl, "PRINT");

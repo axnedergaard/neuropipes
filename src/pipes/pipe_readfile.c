@@ -47,6 +47,7 @@ int readfile_run(pipe_ *p, linkedlist *l)  {
   if (aux->current_set >= aux->set_n)  {  //all signals read
     return 0;
   }
+
   return 1; 
 }
 

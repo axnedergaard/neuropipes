@@ -117,7 +117,7 @@ data* data_create_from_string(char *str)  {
     return data_create(0, NULL, NULL);
   }
   else if (strcmp(str, "EMOTIV") == 0)  {  //emotiv 14 channels 8 readings
-    int shape[2] = {14, 128};
+    int shape[2] = {14, 8};
     int stride[2] = {1, 1};
     return data_create(2, shape, stride);
   }

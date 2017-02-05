@@ -7,12 +7,12 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#include <unistd.h> //DEBUG
+#define DLEN 32 //length of each double in shared memory
 
 struct writesharedmem_aux {
   key_t key;
   int shmid;
-  double *shm;
+  char *shm;
 };
 
 int writesharedmem_init(pipe_ *p, linkedlist *l)  {
@@ -29,9 +29,10 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   int shmid;
   key_t key = 6667;
   int n = input->n; //number of dimensions
-  int buf_len = data_size(input)/sizeof(double); //TODO??
-  int mem_len = (1 + 1 + 1 + 2*n + buf_len)*sizeof(double);  //read + n + shape+stride + data
-  double *shm; 
+  int data_len = input->len;
+  int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
+  char *shm; 
+
   //open and attach shared memory
   if ((shmid = shmget(key, mem_len, IPC_CREAT | 0666)) < 0)  {  //TODO permissions?
     fprintf(stderr, "writesharedmem_init: failed to create shared memory\n");
@@ -59,22 +60,41 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   int n = input->n;
   int *shape = input->shape;
   int *stride = input->stride;
-  int len = data_size(input)/sizeof(double); //input->len instead??
+  int data_len = input->len;
 
   //wait for read?
  
-  double *s = aux->shm;
-  *s++ = 0; //not read
-  *s++ = n;
+  //WRITE
+  char *s = aux->shm;
+  char *buffer = (char*)malloc(sizeof(char)*DLEN); //string containing doubles to be written
+  //n
+  sprintf(buffer, "%f", (double)n);
+  for (int i = 0; i < DLEN; i++)  {
+    *s++ = buffer[i];
+  }
+  //shape
   for (int i = 0; i < n; i++)  {
-    *s++ = shape[i];
+    sprintf(buffer, "%f", (double)shape[i]);
+    for (int j = 0; j < DLEN; j++)  {
+      *s++ = buffer[j];
+    }
   }
+  //stride
   for (int i = 0; i < n; i++)  {
-    *s++ = stride[i];
+    sprintf(buffer, "%f", (double)stride[i]);
+    for (int j = 0; j < DLEN; j++)  {
+      *s++ = buffer[j];
+    }
   }
-  for (int i = 0; i < len; i++)  {
-    *s++ = (double)input->buffer[i];
+  //data
+  for (int i = 0; i < data_len; i++)  {
+    sprintf(buffer, "%f", (double)input->buffer[i]);
+    for (int j = 0; j < DLEN; j++)  {
+      *s++ = buffer[j];
+    }
   }
+ 
+  free(buffer);
 
   return 1; 
 }
