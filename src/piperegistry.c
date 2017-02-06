@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include "register_pipes.h"
 
+#define MAX_PARAM_LEN 32
+
 //TODO hashtable ht (char* -> struct) where struct contains init, run, and input_spec
 hashtable* ht; //hashtable_create();
 
@@ -69,10 +71,10 @@ linkedlist* piperegistry_get_valid_inputs(char *name)  {
   return NULL;
 }
 
-pipe_* build_pipe(char *name, int concurrent)  {  //move somewhere else? pipefactory-like...
-  pipedes* pd = (pipedes*)hashtable_lookup(ht, name);
+pipe_* build_pipe(char *type, int params_n, char** params, int concurrent)  {  //move somewhere else? pipefactory-like...
+  pipedes* pd = (pipedes*)hashtable_lookup(ht, type);
   if (pd == NULL)  {
-    fprintf(stderr, "create_pipe: failed to lookup name %s\n", name);
+    fprintf(stderr, "create_pipe: failed to lookup name %s\n", type);
     return NULL;
   }
   pipe_* p = pipe_create();  //TODO check alloc
@@ -80,6 +82,8 @@ pipe_* build_pipe(char *name, int concurrent)  {  //move somewhere else? pipefac
   p->run = pd->run;
   p->kill = pd->kill;
   p->concurrent = concurrent;  //TODO proper
+  p->params_n = params_n;
+  p->params = params;
   
   return p;
 }

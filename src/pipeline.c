@@ -7,8 +7,10 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include "gettime.h"
+#include <string.h>
 
 #define INITIAL_MAX 8
+#define MAX_PARAM_LEN 32
 
 static int next_id = 0;
 
@@ -164,8 +166,42 @@ int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working
   return 1;
 }
 
-int pipeline_insert(pipeline* pl, char* type, int concurrent)  {
-  pipe_* p = build_pipe(type, concurrent);
+
+
+int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
+  //tokenise spec
+  int params_n = 0;
+  char **params = NULL;
+  char *type = NULL;
+  char *spec_token = strdup(spec);
+  char *token = strtok(spec_token, ";");
+  if (token != NULL)  {
+    type = strdup(token);  
+    token = strtok(NULL, ";"); //parameters
+    if (token != NULL)  { 
+      //get param_n
+      params_n++;
+      for (int i = 0; i < strlen(token); i++)  {
+        if (token[i] == ',')  {
+          params_n++;
+        }
+      }
+      params = (char**)malloc(sizeof(char*)*params_n);
+      token = strtok(token, ",");
+      for (int i = 0; i < params_n; i++)  {
+        params[i] = strdup(token);
+        token = strtok(NULL, ",");
+      }
+    }
+  }
+  free(spec_token);
+  
+ // printf("type=%s\n", type);
+ // for (int i = 0; i < params_n; i++)  {
+ //   printf("param %d: %s\n", i, params[i]);
+ // }
+
+  pipe_* p = build_pipe(type, params_n, params, concurrent);
 
   pipe_set_id(p, next_id++);
 

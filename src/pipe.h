@@ -17,6 +17,8 @@ struct pipe {
   int(*run)(pipe_*, linkedlist*);
   int(*kill)(pipe_*, linkedlist*);
   int concurrent; 
+  int params_n;
+  char **params;
   concurrent_pipe *concurrent_pipe;
   debug_pipe *debug; 
 };
@@ -30,5 +32,6 @@ int pipe_init(pipe_*, linkedlist*);
 int pipe_kill(pipe_*, linkedlist*);
 void pipe_set_concurrent(pipe_*, int);
 int pipe_get_concurrent(pipe_*);
+char *pipe_param(pipe_*, char*);  //parse params and return value if exists
 
 #endif

@@ -31,7 +31,13 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   int n = input->n; //number of dimensions
   int data_len = input->len;
   int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
-  char *shm; 
+  char *shm;
+
+  char *key_param = pipe_param(p, "KEY");
+  if (key_param != NULL)  { 
+    key = atoi(key_param);
+    free(key_param);
+  }
 
   //open and attach shared memory
   if ((shmid = shmget(key, mem_len, IPC_CREAT | 0666)) < 0)  {  //TODO permissions?

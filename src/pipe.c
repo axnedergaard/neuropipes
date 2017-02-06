@@ -1,7 +1,10 @@
 #include "pipe.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "pipeline.h"  //?
+
+#define MAX_PARAM_VAL_LEN 32
 
 pipe_* pipe_create()  {
   pipe_ *p = (pipe_*)malloc(sizeof(pipe_));
@@ -21,6 +24,8 @@ pipe_* pipe_create()  {
     p->status = -1;  //not init
     p->concurrent = 0;
     p->concurrent_pipe = NULL;
+    p->params_n = 0;
+    p->params = NULL;
   }
   return p;
 }
@@ -35,6 +40,15 @@ int pipe_destroy(pipe_ *p)  {
     return 1;
   }
   return 0;
+}
+
+char *pipe_param(pipe_* p, char *s)  {
+  for (int i = 0; i < p->params_n; i++)  {
+    if (strcmp(strtok(p->params[i], ":"), s) == 0)  {  //param matched
+      return strdup(strtok(NULL, ":"));
+    }
+  }
+  return NULL;  //fail
 }
 
 void pipe_set_id(pipe_* p, int id)  {
