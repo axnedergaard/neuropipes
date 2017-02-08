@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+//TODO random parameter
+
 int dummyemotiv_init(pipe_* p, linkedlist* l)  {
   p->output = data_create_from_string("EMOTIV");
 

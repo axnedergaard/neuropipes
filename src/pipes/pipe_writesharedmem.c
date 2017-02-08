@@ -36,9 +36,8 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   char *key_param = pipe_param(p, "KEY");
   if (key_param != NULL)  { 
     key = atoi(key_param);
-    free(key_param);
+    free(key_param); 
   }
-
   //open and attach shared memory
   if ((shmid = shmget(key, mem_len, IPC_CREAT | 0666)) < 0)  {  //TODO permissions?
     fprintf(stderr, "writesharedmem_init: failed to create shared memory\n");
