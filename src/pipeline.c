@@ -35,7 +35,7 @@ pipeline* pipeline_create()  {
   pl->nodes_max = INITIAL_MAX;
   pl->nodes_n = 0;
 
-  pl->nodes = (pipe_**)malloc(sizeof(void*)*pl->nodes_max);
+  pl->nodes = (pipe_**)malloc(sizeof(pipe_*)*pl->nodes_max);
   if (pl->nodes == NULL)  {
     fprintf(stderr, "pipeline_create: failed to allocate memory for nodes");
     free(pl);
@@ -91,7 +91,7 @@ int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destr
         }
       }
     }
-    for (int i = 0; i < pl->nodes_max; i++)  {
+    for (int i = 0; i < pl->nodes_n; i++)  {
       if (pl->adjacency_list[i] != NULL)  {
         if (linkedlist_destroy(pl->in_data[i]) == 0)  {
           return 0;
@@ -134,15 +134,19 @@ pipe_* pipeline_get_pipe(pipeline* pl, int id)  {
 }
 
 int pipeline_expand(pipeline* pl)  {
-  if (realloc(pl->nodes, sizeof(pl->nodes)*2) == NULL)  {
+  pl->nodes_max *= 2;
+  pipe_ **nodes_new = realloc(pl->nodes, sizeof(pipe_*)*pl->nodes_max);
+  if (nodes_new == NULL)  {
     fprintf(stderr, "pipeline_expand: failed to realloc nodes\n");
     return 0;
   }
-  if (realloc(pl->sort, sizeof(pl->sort)*2) == NULL)  {
+  pl->nodes = nodes_new;
+  int *sort_new = realloc(pl->sort, sizeof(int)*pl->nodes_max);
+  if (sort_new == NULL)  {
     fprintf(stderr, "pipeline_expand: failed to realloc sort\n");
     return 0;
   }
-  pl->nodes_max *= 2;
+  pl->sort = sort_new;
   return 1;
 }
 
@@ -195,11 +199,6 @@ int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
     }
   }
   free(spec_token);
-  
- // printf("type=%s\n", type);
- // for (int i = 0; i < params_n; i++)  {
- //   printf("param %d: %s\n", i, params[i]);
- // }
 
   pipe_* p = build_pipe(type, params_n, params, concurrent);
 
@@ -259,7 +258,7 @@ int pipeline_sort(pipeline* pl)  {  //make ordered sort, filling in empty gaps?
      if (--in[out_edge] == 0)  {
        pl->sort[added++] = out_edge;
      }
-   }
+    }
   }
   //sort completed
 
@@ -297,10 +296,13 @@ int pipeline_run(pipeline* pl)  {
   }
 
   int quit = 0;
-  double interval = 0;
+  double interval = 1;
   double total_time_before = get_clock_time(); 
   //double interval = 1.0;
   while (quit == 0)  {  //time sync?  //TODO remove concurrent pipes from main loop but ensure quit communication
+    if (pl->loop == 1)  {
+      quit = 1;
+    }
     double pipeline_time_before = get_clock_time();
     for (int i = 0; i < pl->nodes_n; i++)  {
       debug_pipe *debug = pl->nodes[pl->sort[i]]->debug;
@@ -321,21 +323,20 @@ int pipeline_run(pipeline* pl)  {
       double pipe_time = debug_pipe_time(debug);
       printf("pipe %d ran in %fs\n", pl->sort[i], pipe_time);
     }
-    if (pl->loop == 1)  {
-      quit = 1;
-    }
-    else if (pl->loop > 1)  {
-      pl->loop--;
-    }
+    
     double pipeline_time = get_clock_time() - pipeline_time_before;
     printf("pipeline ran in %fs\n", pipeline_time);
     double lag = interval - pipeline_time;
-    if ((pl->loop != 0) && (lag > 0))  {
+    if ((pl->loop != 1) && (lag > 0))  {
       printf("sleeping for %fs\n\n", lag);
       usleep((int)(lag*1000000));
     }
     else  {
       printf("\n");
+    }
+
+    if (pl->loop != 0)  {
+      pl->loop--;
     }
   }
   
