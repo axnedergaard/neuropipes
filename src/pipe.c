@@ -43,10 +43,13 @@ int pipe_destroy(pipe_ *p)  {
 }
 
 char *pipe_param(pipe_* p, char *s)  {
+  char *s_tok = NULL; 
   for (int i = 0; i < p->params_n; i++)  {
-    if (strcmp(strtok(p->params[i], ":"), s) == 0)  {  //param matched
-      return strdup(strtok(NULL, ":"));
+    s_tok = strdup(p->params[i]);
+    if (strcmp(strtok(s_tok, "="), s) == 0)  {  //param matched
+      return strdup(strtok(NULL, "="));
     }
+    free(s_tok);
   }
   return NULL;  //fail
 }

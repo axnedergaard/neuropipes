@@ -33,7 +33,7 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
   char *shm;
 
-  char *key_param = pipe_param(p, "KEY");
+  char *key_param = pipe_param(p, "key");
   if (key_param != NULL)  { 
     key = atoi(key_param);
     free(key_param); 

@@ -34,15 +34,15 @@ if (argc > 1)  {
 
   //construct pipeline 
   int dummy = pipeline_insert(pl, "DUMMYEMOTIV", 0);
-  int bp = pipeline_insert(pl, "ALPHABANDPASS", 0);
-  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;KEY:42", 0);
-  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;KEY:43", 0);
+  int bp = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
+  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
   int print = pipeline_insert(pl, "PRINT", 0); 
   pipeline_insert_edge(pl, dummy, writemem1);
   pipeline_insert_edge(pl, dummy, bp);
   pipeline_insert_edge(pl, bp, print);
   pipeline_insert_edge(pl, bp, writemem2);
-  
+ 
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");
