@@ -12,6 +12,7 @@ pipe_* pipeline_get_pipe(pipeline*, int);
 int pipeline_size(pipeline*);
 void pipeline_set_loop(pipeline* pl, int);
 int pipeline_get_loop(pipeline* pl);
+void pipeline_set_interval(pipeline *pl, double);
 int pipeline_insert(pipeline*, char*, int);
 int pipeline_remove(pipeline*, int);  //remove using pipe or pid?
 int pipeline_insert_edge(pipeline*, int, int);

@@ -3,6 +3,6 @@
 
 #include "pipe.h"
 
-pipe_* build_pipe(char*);  //maybe to be moved
+pipe_* build_pipe(char*, int); 
 
 #endif

@@ -28,20 +28,27 @@ int main(int argc, char **argv)  {
 
   
 
-if (argc > 1)  {
+  if (argc > 2)  {
+    pipeline_set_interval(pl, atof(argv[2]));
+  }
+  if (argc > 1)  { 
     pipeline_set_loop(pl, atoi(argv[1]));
   }
 
   //construct pipeline 
-  int dummy = pipeline_insert(pl, "DUMMYEMOTIV", 0);
-  int bp = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
-  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
-  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
+  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 0);
+//  int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
+//  int filt2 = pipeline_insert(pl, "FILTER;order=4,pass=high,lc=8,hc=10", 0);
+//int filt3 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=10", 0);
+//  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+//  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
   int print = pipeline_insert(pl, "PRINT", 0); 
-  pipeline_insert_edge(pl, dummy, writemem1);
-  pipeline_insert_edge(pl, dummy, bp);
-  pipeline_insert_edge(pl, bp, print);
-  pipeline_insert_edge(pl, bp, writemem2);
+  pipeline_insert_edge(pl, emotiv, print);
+//  pipeline_insert_edge(pl, emotiv, writemem1);
+//  pipeline_insert_edge(pl, filt1, print);
+//  pipeline_insert_edge(pl, filt1, writemem1);
+//  pipeline_insert_edge(pl, filt1, writemem2);
+//  pipeline_insert_edge(pl, emotiv, print);
  
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");

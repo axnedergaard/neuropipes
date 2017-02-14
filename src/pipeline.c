@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "linkedlist.h"
+#include "pipebuilder.h"
 #include "piperegistry.h"
 #include <unistd.h>
 #include <sys/time.h>
@@ -21,8 +22,8 @@ struct pipeline {  //graph
   int nodes_max;
   linkedlist **adjacency_list;  //adjacency list with ints
   linkedlist **in_data; //in data for every node
-//  int iterater;
   int loop;
+  double interval;
 };
 
 pipeline* pipeline_create()  {
@@ -76,6 +77,7 @@ pipeline* pipeline_create()  {
   }
 
   pl->loop = 1;
+  pl->interval = 0;
 
   piperegistry_init();
 
@@ -111,19 +113,23 @@ int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destr
   return 0;
 }
 
-int pipeline_size(pipeline* pl)  {
+int pipeline_size(pipeline *pl)  {
   return pl->nodes_n;
 }
 
-void pipeline_set_loop(pipeline* pl, int d)  {
+void pipeline_set_loop(pipeline *pl, int d)  {
   pl->loop = d;
 }
 
-int pipeline_get_loop(pipeline* pl)  {
+int pipeline_get_loop(pipeline *pl)  {
   return pl->loop;
 }
 
-pipe_* pipeline_get_pipe(pipeline* pl, int id)  {
+void pipeline_set_interval(pipeline *pl, double d)  {
+  pl->interval = d;
+}
+
+pipe_ *pipeline_get_pipe(pipeline *pl, int id)  {
   if ((id >= 0) && (id < pl->nodes_n))  {
     return pl->nodes[id];
   }
@@ -133,7 +139,7 @@ pipe_* pipeline_get_pipe(pipeline* pl, int id)  {
   }
 }
 
-int pipeline_expand(pipeline* pl)  {
+int pipeline_expand(pipeline *pl)  {
   pl->nodes_max *= 2;
   pipe_ **nodes_new = realloc(pl->nodes, sizeof(pipe_*)*pl->nodes_max);
   if (nodes_new == NULL)  {
@@ -173,34 +179,7 @@ int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working
 
 
 int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
-  //tokenise spec
-  int params_n = 0;
-  char **params = NULL;
-  char *type = NULL;
-  char *spec_token = strdup(spec);
-  char *token = strtok(spec_token, ";");
-  if (token != NULL)  {
-    type = strdup(token);  
-    token = strtok(NULL, ";"); //parameters
-    if (token != NULL)  { 
-      //get param_n
-      params_n++;
-      for (int i = 0; i < strlen(token); i++)  {
-        if (token[i] == ',')  {
-          params_n++;
-        }
-      }
-      params = (char**)malloc(sizeof(char*)*params_n);
-      token = strtok(token, ",");
-      for (int i = 0; i < params_n; i++)  {
-        params[i] = strdup(token);
-        token = strtok(NULL, ",");
-      }
-    }
-  }
-  free(spec_token);
-
-  pipe_* p = build_pipe(type, params_n, params, concurrent);
+  pipe_* p = build_pipe(spec, concurrent);
 
   pipe_set_id(p, next_id++);
 
@@ -296,7 +275,6 @@ int pipeline_run(pipeline* pl)  {
   }
 
   int quit = 0;
-  double interval = 1;
   double total_time_before = get_clock_time(); 
   //double interval = 1.0;
   while (quit == 0)  {  //time sync?  //TODO remove concurrent pipes from main loop but ensure quit communication
@@ -326,7 +304,7 @@ int pipeline_run(pipeline* pl)  {
     
     double pipeline_time = get_clock_time() - pipeline_time_before;
     printf("pipeline ran in %fs\n", pipeline_time);
-    double lag = interval - pipeline_time;
+    double lag = pl->interval - pipeline_time;
     if ((pl->loop != 1) && (lag > 0))  {
       printf("sleeping for %fs\n\n", lag);
       usleep((int)(lag*1000000));

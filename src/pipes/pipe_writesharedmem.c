@@ -1,6 +1,5 @@
 #include "../pipe.h"
-#include "../data.h"
-
+#include "../parameters.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -33,7 +32,7 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
   char *shm;
 
-  char *key_param = pipe_param(p, "key");
+  char *key_param = get_parameter(p, "key");
   if (key_param != NULL)  { 
     key = atoi(key_param);
     free(key_param); 

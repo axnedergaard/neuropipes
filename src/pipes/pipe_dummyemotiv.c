@@ -1,4 +1,5 @@
 #include "../pipe.h"
+#include "../parameters.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -19,7 +20,7 @@ int dummyemotiv_init(pipe_* p, linkedlist* l)  {
   aux->buffer = (double*)malloc(data_size(p->output));
   aux->random = 1;
 
-  char *random_param = pipe_param(p, "random");
+  char *random_param = get_parameter(p, "random");
   if (random_param != NULL)  {
     if (strcmp(random_param, "0") == 0)  {
       aux->random = 0;
@@ -41,7 +42,7 @@ int dummyemotiv_run(pipe_* p, linkedlist* l)  {
   for (int i = 0; i < p->output->shape[0]; i++)  {
     for (int j = 0; j < p->output->shape[1]; j++)  { 
       if (random == 1)  {
-        buffer[i*p->output->shape[1] + j] = rand() % 10000;  //random
+        buffer[i*p->output->shape[1] + j] = (rand() % 10000) + 0;  //random
       }  
       else  {
         buffer[i*p->output->shape[1] + j] = i*p->output->shape[1] + j;

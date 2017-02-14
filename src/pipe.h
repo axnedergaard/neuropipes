@@ -12,7 +12,6 @@ struct pipe {
   data* output;
   int status;  // <-1:error -1:not init 0:not complete >0:complete
   void* auxiliary; //auxiliary data structure, e.g. for emokit 
-  void* buffer;  //buffers used during runtime
   int(*init)(pipe_*, linkedlist*);
   int(*run)(pipe_*, linkedlist*);
   int(*kill)(pipe_*, linkedlist*);
@@ -32,6 +31,5 @@ int pipe_init(pipe_*, linkedlist*);
 int pipe_kill(pipe_*, linkedlist*);
 void pipe_set_concurrent(pipe_*, int);
 int pipe_get_concurrent(pipe_*);
-char *pipe_param(pipe_*, char*);  //parse params and return value if exists
 
 #endif

@@ -1,4 +1,5 @@
 #include "../pipe.h"
+#include "../parameters.h"
 #include "../fidlib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ int filter_init(pipe_* p, linkedlist* l)  {
   int lc = 8;  //lower cutoff
   int hc = 12;  //higher cutoff
 
-  char *pass_param = pipe_param(p, "pass"); //band, high, low...
+  char *pass_param = get_parameter(p, "pass"); //band, high, low...
   if (pass_param != NULL)  {
     if (strcmp(pass_param, "band") == 0)  {  //redundant?
       strcpy(pass, "band");  //TODO unsafe
@@ -44,17 +45,17 @@ int filter_init(pipe_* p, linkedlist* l)  {
     }
   } 
   free(pass_param);
-  char *lc_param = pipe_param(p, "lc");
+  char *lc_param = get_parameter(p, "lc");
   if (lc_param != NULL)  {
     lc = atoi(lc_param);
   }
   free(lc_param);
-  char *hc_param = pipe_param(p, "hc");
+  char *hc_param = get_parameter(p, "hc");
   if (hc_param != NULL)  {
     hc = atoi(hc_param);
   }
   free(hc_param);
-  char *order_param = pipe_param(p, "order");
+  char *order_param = get_parameter(p, "order");
   if (order_param != NULL)  {
     order = atoi(order_param);
   }

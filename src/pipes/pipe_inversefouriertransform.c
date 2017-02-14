@@ -47,7 +47,7 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   for (int i = 0; i < c; i++)  {
     buffer->ft_p[i] = fftw_plan_dft_1d(n, (buffer->ft_in + i*n), (buffer->ft_out + i*n), FFTW_BACKWARD, FFTW_ESTIMATE);
   }
-  p->buffer = buffer;
+  p->auxiliary = buffer;
 
   return 1;
 }
@@ -60,7 +60,7 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   }
   linkedlist_reset_iterater(l);
  
-  struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->buffer;
+  struct buffer_fouriertransform *buffer = (struct buffer_fouriertransform*)p->auxiliary;
   
   data_copy_from_data(input, (void*)buffer->ft_in);
 

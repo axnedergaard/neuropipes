@@ -1,7 +1,6 @@
 #include "piperegistry.h"
 #include "pipe.h"
 #include "linkedlist.h"
-#include "hashtable.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,15 +10,6 @@
 
 //TODO hashtable ht (char* -> struct) where struct contains init, run, and input_spec
 hashtable* ht; //hashtable_create();
-
-//pipe names/descriptions?
-typedef struct pipedes pipedes;  //pipe description
-struct pipedes  {
-  int(*init)(pipe_*, linkedlist*);
-  int(*run)(pipe_*, linkedlist*);
-  int(*kill)(pipe_*, linkedlist*);
-  char* valid_inputs;  //valid input data, format "NAME1, NAME2, NAME3"
-};
 
 int piperegistry_init()  {  //???
   ht = hashtable_create();
@@ -71,19 +61,6 @@ linkedlist* piperegistry_get_valid_inputs(char *name)  {
   return NULL;
 }
 
-pipe_* build_pipe(char *type, int params_n, char** params, int concurrent)  {  //move somewhere else? pipefactory-like...
-  pipedes* pd = (pipedes*)hashtable_lookup(ht, type);
-  if (pd == NULL)  {
-    fprintf(stderr, "create_pipe: failed to lookup name %s\n", type);
-    return NULL;
-  }
-  pipe_* p = pipe_create();  //TODO check alloc
-  p->init = pd->init;
-  p->run = pd->run;
-  p->kill = pd->kill;
-  p->concurrent = concurrent;  //TODO proper
-  p->params_n = params_n;
-  p->params = params;
-  
-  return p;
+hashtable *piperegistry_ht()  {
+  return ht;
 }
