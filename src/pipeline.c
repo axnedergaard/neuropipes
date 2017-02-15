@@ -9,11 +9,19 @@
 #include <stdint.h>
 #include "gettime.h"
 #include <string.h>
+#include <signal.h>
 
 #define INITIAL_MAX 8
 #define MAX_PARAM_LEN 32
 
 static int next_id = 0;
+static int quit = 0;
+
+void sig_handler(int signo)  {
+  if (signo == SIGINT)  {
+    quit = 1;
+  }
+}
 
 struct pipeline {  //graph
   pipe_ **nodes;  //critical: assume (entries[x] | 0 <= x < entries_n)
@@ -310,7 +318,6 @@ int pipeline_run(pipeline* pl)  {
     return 0;
   }
 
-  int quit = 0;
   double total_time_before = get_clock_time(); 
   //double interval = 1.0;
 
@@ -321,7 +328,10 @@ int pipeline_run(pipeline* pl)  {
   }
 
   //run non-concurrent pipes
-  while (quit == 0)  {  //time sync?  //TODO remove concurrent pipes from main loop but ensure quit communication
+  while (quit == 0)  {  //time sync?
+    if (signal(SIGINT, sig_handler) == SIG_ERR)  {
+      fprintf(stderr, "pipeline_run: failed to catch sig\n");
+    }
     if (pl->loop == 1)  {
       quit = 1;
     }
