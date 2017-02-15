@@ -59,12 +59,5 @@ int data_copy_from_data_real_to_complex(data*, double*);
 int data_copy_from_data_complex_to_real(data*, double*);
 
 int data_write(data*, FILE*);
-int data_read(data*, FILE*);
-
-int data_edf_open_write(data*, char*);
-int data_edf_open_read(char*, int*, int*, int*);
-int data_edf_write(data*, int);
-int data_edf_read(data*, int);
-int data_edf_close(int);
 
 #endif

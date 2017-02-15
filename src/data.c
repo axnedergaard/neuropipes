@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "edflib.h"
 
 data* data_create(int n, int *shape, int *stride)  {
   data *d = (data*)malloc(sizeof(data));
@@ -290,70 +289,4 @@ int data_write(data *d, FILE* f)  {
   read_unlock(d);
 
   return 1;
-}
-
-int data_edf_open_write(data *d, char *fn)  {
-  int c = d->shape[0];
-  int n = d->shape[1];
-  int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
-  for (int i = 0; i < c; i++)  {
-   if (edf_set_samplefrequency(handle, i, n) != 0)  printf("failed to set sample frequency\n");
-    if (edf_set_physical_maximum(handle, i, 10000) != 0)  printf("failed to set max phy\n");
-    if (edf_set_physical_minimum(handle, i, 0) != 0)  printf("failed to set min phy\n");
-    if (edf_set_digital_maximum(handle, i, 32767) != 0)  printf("failed to max dig\n");
-    if (edf_set_digital_minimum(handle, i, 0) != 0)  printf("failed to set min dig\n");
-  }
-  return handle;
-}
-
-int data_edf_open_read(char *fn, int *c, int *n, int *s)  {  //filename, channels, samples, sets
-  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
-  if (edfopen_file_readonly("recording.edf", hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
-    printf("failed to read file\n");
-  }
-  *c = hdr->edfsignals;
-  struct edf_param_struct sig_par = hdr->signalparam[0];  //assume n and sets is same for all channels
-  *n = sig_par.smp_in_datarecord;
-  *s = sig_par.smp_in_file / sig_par.smp_in_datarecord;
-
-  return hdr->handle;
-}
-
-
-int data_edf_write(data *d, int handle)  {
-  int c = d->shape[0];
-  int n = d->shape[1];
-
-  read_lock(d);
-
-  for (int i = 0; i < c; i++)  {
-    if (edfwrite_physical_samples(handle, (d->buffer + i*n)) != 0)  {  //stride?
-      fprintf(stderr, "data_write_edf: failed to write to file\n");
-    }
-  }
-
-  read_unlock(d);
-
-  return 1;
-}
-
-int data_edf_read(data *d, int handle)  {  //don't open file every time?
-  int c = d->shape[0];
-  int n = d->shape[1];
-
-  write_lock(d);
-  
-  for (int i = 0; i < c; i++)  {
-    if (edfread_physical_samples(handle, i, n, (d->buffer + i*n)) < 0)  {
-      printf("data_edf_read: failed to read samples\n"); 
-    }
-  }
-
-  write_unlock(d);
-  
-  return 1;
-}
-
-int data_edf_close(int handle)  {
-  return (edfclose_file(handle) == 0);
 }

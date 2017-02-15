@@ -281,7 +281,7 @@ int pipeline_init(pipeline* pl)  {
 
 int pipeline_run(pipeline* pl)  {
   if (pipeline_size(pl) <= 0)  {  //remove???
-    fprintf(stderr, "no pipe_s to run\n");
+    fprintf(stderr, "no pipes to run\n");
     return 0;
   }
 

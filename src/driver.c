@@ -34,8 +34,22 @@ int main(int argc, char **argv)  {
   }
 
   //construct pipeline 
+/*
+  //write file
+  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 1);
+  int writefile = pipeline_insert(pl, "WRITEFILE", 0);
+  pipeline_insert_edge(pl, emotiv, writefile);
+*/
+
+  //read file
+  int readfile = pipeline_insert(pl, "READFILE", 1);
+  int print = pipeline_insert(pl, "PRINT", 0);
+  pipeline_insert_edge(pl, readfile, print);
+
+/*
+  //python bandpass
   int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
-  int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
+  int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 1);
   int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
   int print = pipeline_insert(pl, "PRINT", 0); 
@@ -43,8 +57,7 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, emotiv, print);
   pipeline_insert_edge(pl, emotiv, writemem1);
   pipeline_insert_edge(pl, filt1, writemem2);
- 
-
+ */
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

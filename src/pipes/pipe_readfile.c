@@ -1,5 +1,6 @@
 #include "../pipe.h"
 #include "../data.h"
+#include "../edflib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,8 +16,16 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
   int c;
   int n;
   int set_n;
-  char *filename = "recording.edf";
-  int handle = data_edf_open_read(filename, &c, &n, &set_n);
+  char *fn = "recording.edf";
+
+  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
+  if (edfopen_file_readonly(fn, hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
+    printf("failed to read file\n");
+  }
+  c = hdr->edfsignals;
+  struct edf_param_struct sig_par = hdr->signalparam[0];  //assume n and sets is same for all channels
+  n = sig_par.smp_in_datarecord;
+  set_n = sig_par.smp_in_file / sig_par.smp_in_datarecord;
 
   int shape[2];
   int stride[2];
@@ -29,7 +38,7 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
   struct readfile_aux *aux = (struct readfile_aux*)malloc(sizeof(struct readfile_aux));
   aux->current_set = 0;
   aux->set_n = set_n;
-  aux->handle = handle;
+  aux->handle = hdr->handle;
 
   p->auxiliary = aux;
 
@@ -40,8 +49,19 @@ int readfile_run(pipe_ *p, linkedlist *l)  {
   struct readfile_aux *aux = (struct readfile_aux*)p->auxiliary;
 
   //read
-  data_edf_read(p->output, aux->handle); 
+  int c = p->output->shape[0];
+  int n = p->output->shape[1];
+
+  write_lock(p->output);
+
+  for (int i = 0; i < c; i++)  {
+    if (edfread_physical_samples(aux->handle, i, n, (p->output->buffer + i*n)) < 0)  {
+      printf("data_edf_read: failed to read samples\n");
+    }
+  }
  
+  write_unlock(p->output); 
+
   aux->current_set++;
 
   if (aux->current_set >= aux->set_n)  {  //all signals read
@@ -52,7 +72,7 @@ int readfile_run(pipe_ *p, linkedlist *l)  {
 }
 
 int readfile_kill(pipe_* p, linkedlist* l)  {
-  struct readfile_aux *aux = (struct readfile_aux*)p->auxiliary;
-  data_edf_close(aux->handle);
-  return 1;
+  return (edfclose_file(((struct readfile_aux*)p->auxiliary)->handle) == 0);
+
+
 }
