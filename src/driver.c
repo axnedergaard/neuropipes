@@ -26,8 +26,6 @@ void insert_next_concurrent(pipeline *pl, char *pipe)  {
 int main(int argc, char **argv)  {
   pipeline* pl = pipeline_create();
 
-  
-
   if (argc > 2)  {
     pipeline_set_interval(pl, atof(argv[2]));
   }
@@ -36,9 +34,6 @@ int main(int argc, char **argv)  {
   }
 
   //construct pipeline 
-//  int writefile = pipeline_insert(pl, "WRITEFILE", 0);
-//  pipeline_insert_edge(pl, emotiv, writefile);
-
   int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
   int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
   int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
