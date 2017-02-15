@@ -24,6 +24,7 @@ struct data {
   int writes;  //TODO better naming?
   int reads;
   int readers;
+  int kill;
 };
 
 int data_type(data*);  //get type (e.g. real or complex) from data

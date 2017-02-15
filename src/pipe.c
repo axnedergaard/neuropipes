@@ -65,14 +65,15 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
             if (p->concurrent_pipe == NULL)  {
               fprintf(stderr, "pipe_init: failed to create concurrent pipe\n");
             }
-            data_make_blocking(p->output);  //make out data blocking
+            if (p->output != NULL)  {
+              data_make_blocking(p->output);  //make out data blocking
+            }
           }
           else  {  //increment readers for every input pipe (can skip concurrent pipes since they have no inputs)
             data **data_ptr = NULL;
             while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
               data *d = *data_ptr;
               if (data_blocking(d))  {
-                printf("incrementing readers\n");
                 data_increment_readers(d); 
               }
             }
@@ -92,9 +93,10 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
   return 0; 
 }
 
-int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
+int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input 
   if (p != NULL)  {
     if (p->run != NULL)  {
+/*
       if (p->concurrent == 1)  {  //concurrent pipe
         concurrent_pipe* pp = p->concurrent_pipe;
 
@@ -111,7 +113,7 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
         p->status = 1; //ran
         return 1;
       }
-      else {
+      else {*/
         int status = p->run(p, l);
         if (status >= 0)  {  //non-concurrent pipe, ran succesfully
           debug_pipe_increment_times_run(p->debug);  //DEBUG
@@ -121,7 +123,7 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
           fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
         }
       }
-    }
+   // }
     else  {
       printf("pipe has no call\n");
       return -1;

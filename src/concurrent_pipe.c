@@ -10,24 +10,33 @@ struct concurrent_pipe {
   pthread_t thread;
   int started;
   int done;
-  //int buffer_ready;
-  //mutex and cond for buffer_ready
-//  pthread_mutex_t mutex;
-  //pthread_cond_t cond;
 };
 
-void *concurrent_pipe_run(void *pipe)  {
-  pipe_ *p = (pipe_*)pipe;
+struct run_input  {
+  pipe_ *p;
+  linkedlist *input;
+  int *quit;
+};
+
+void *concurrent_pipe_run(void *inp)  {
+  struct run_input *rinp = (struct run_input*)inp;
+  pipe_ *p = rinp->p;
+  int *quit = rinp->quit;
+  linkedlist *input = rinp->input;
   concurrent_pipe *pp = p->concurrent_pipe;
   while (pp->started == 1) {
+    debug_pipe_start_timer(p->debug); //DEBUG
   //assume concurrent pipe has no inputs
-    if (p->run(p, NULL) == 0)  {  //pipe finished
+    if (pipe_run(p, input) == 0)  {  //pipe finished
       pp->done = 1;
+      *quit = 1;
       concurrent_pipe_stop(pp);
-    //  data_unblock(p->output);
     }
-    debug_pipe_increment_times_run(p->debug);  //DEBUG
+    debug_pipe_stop_timer(p->debug); //DEBUG
+    double pipe_time = debug_pipe_time(p->debug);
+    printf("concurrent pipe %d ran in %fs\n", p->id, pipe_time);
   }
+//  data_unblock(p->output);
   return NULL;
 }
 
@@ -38,9 +47,6 @@ concurrent_pipe *concurrent_pipe_create()  {
     return NULL;
   }
   pp->started = 0;
-  //pp->buffer_ready = 0;
-  //pthread_mutex_init(&pp->mutex, NULL);
-  //pthread_cond_init(&pp->cond, NULL);
 
   return pp;  
 }
@@ -59,9 +65,14 @@ int concurrent_pipe_stop(concurrent_pipe *pp)  {
   return 1;
 }
 
-int concurrent_pipe_start(concurrent_pipe *pp, void* pipe)  {
+int concurrent_pipe_start(concurrent_pipe *pp, void *p, linkedlist *input, int *quit)  {
+  struct run_input *rinp = (struct run_input*)malloc(sizeof(struct run_input));  
+  rinp->p = (pipe_*)p;
+  rinp->input = input;
+  rinp->quit = quit;
+
   pp->started = 1;
-  if (pthread_create(&pp->thread, NULL, &concurrent_pipe_run, pipe) != 0)  {
+  if (pthread_create(&pp->thread, NULL, &concurrent_pipe_run, rinp) != 0)  {
     fprintf(stderr, "concurrent_pipe_create: failed to create pthread\n");
     free(pp);
     return 0;

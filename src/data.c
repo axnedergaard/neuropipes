@@ -47,6 +47,7 @@ int data_make_blocking(data *d)  {  //make data blocking
   d->reads = 0;
   d->readers = 0; 
   d->writes = 0;
+  d->kill = 0;
   return 1;
 }
 
@@ -68,10 +69,7 @@ void data_increment_readers(data *d)  {
 
 int data_unblock(data *d)  {
   pthread_mutex_lock(&d->mutex);
-  d->readers = 0;
-  d->reads = 0;
-  d->writes = 0; //TODO dangerous?
-  d->blocking = 0;
+  d->kill = 1;
   pthread_cond_broadcast(&d->cond_written);
   pthread_cond_broadcast(&d->cond_read);
   pthread_mutex_unlock(&d->mutex);
@@ -84,16 +82,16 @@ void data_reset_readers(data *d)  {  //to allow killed thread to finish without 
 
 void read_lock(data *d)  {
   pthread_mutex_lock(&d->mutex);
-  while ((d->blocking == 1) && (d->writes == 0))  {
+  while ((d->kill != 1) && (d->writes == 0))  {
     pthread_cond_wait(&d->cond_written, &d->mutex);
   }
 }
 
 void write_lock(data *d)  {
   pthread_mutex_lock(&d->mutex);
-  while ((d->blocking == 1) && (d->writes > 0)  && (d->reads < d->readers))  {
+  while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
     pthread_cond_wait(&d->cond_read, &d->mutex);
-  } 
+  }
 }
 
 void write_unlock(data *d)  {
