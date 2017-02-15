@@ -6,10 +6,7 @@
 #include <stdio.h>
 #include "register_pipes.h"
 
-#define MAX_PARAM_LEN 32
-
-//TODO hashtable ht (char* -> struct) where struct contains init, run, and input_spec
-hashtable* ht; //hashtable_create();
+hashtable* ht;
 
 int piperegistry_init()  {  //???
   ht = hashtable_create();
@@ -21,8 +18,6 @@ int piperegistry_init()  {  //???
 
   return 1;
 } 
-
-//destroy register?
 
 int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)(pipe_*, linkedlist*), int(*kill)(pipe_*, linkedlist*), char *valid_inputs)  {
   pipedes *pd = (pipedes*)malloc(sizeof(pipedes));

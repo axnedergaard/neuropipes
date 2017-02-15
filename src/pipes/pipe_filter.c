@@ -129,7 +129,6 @@ int filter_run(pipe_* p, linkedlist* l)  {
   return 1;
 }
 
-
 int filter_kill(pipe_* p, linkedlist* l)  {
   return 1;
 }

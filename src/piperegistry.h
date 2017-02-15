@@ -14,6 +14,7 @@ struct pipedes  {
   char* valid_inputs;  //valid input data, format "NAME1, NAME2, NAME3"
 };
 
+//destroy?
 int piperegistry_init();
 int piperegistry_register(char* name, int(*)(pipe_*, linkedlist*), int(*)(pipe_*, linkedlist*), int(*)(pipe_*, linkedlist*), char*);
 int piperegistry_deregister(char*);

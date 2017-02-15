@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "pipeline.h"  //?
 #include "pipebuilder.h"
 
 pipe_* pipe_create()  {
@@ -69,13 +68,11 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
               data_make_blocking(p->output);  //make out data blocking
             }
           }
-          else  {  //increment readers for every input pipe (can skip concurrent pipes since they have no inputs)
-            data **data_ptr = NULL;
-            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
-              data *d = *data_ptr;
-              if (data_blocking(d))  {
-                data_increment_readers(d); 
-              }
+          data **data_ptr = NULL;
+          while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
+            data *d = *data_ptr;
+            if (data_blocking(d))  {
+              data_increment_readers(d); 
             }
           }
           p->status = 0;  //inited
@@ -96,36 +93,17 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
 int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input 
   if (p != NULL)  {
     if (p->run != NULL)  {
-/*
-      if (p->concurrent == 1)  {  //concurrent pipe
-        concurrent_pipe* pp = p->concurrent_pipe;
-
-        if (concurrent_pipe_done(pp) == 1)  {
-          p->status = 0;
-          //data_unblock(p->output);
-          return 0;
-        }
-
-        if (concurrent_pipe_started(pp) == 0)  {  //thread not started
-          concurrent_pipe_start(pp, (void*)p);  //start thread
-        }
-        
-        p->status = 1; //ran
-        return 1;
+      int status = p->run(p, l);
+      if (status >= 0)  { 
+        debug_pipe_increment_times_run(p->debug);  //DEBUG
+        return status;
       }
-      else {*/
-        int status = p->run(p, l);
-        if (status >= 0)  {  //non-concurrent pipe, ran succesfully
-          debug_pipe_increment_times_run(p->debug);  //DEBUG
-          return status;
-        }
-        else  {
-          fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
-        }
+      else  {
+        fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
       }
-   // }
+    }
     else  {
-      printf("pipe has no call\n");
+      fprintf(stderr, "pipe_run: pipe has no call\n");
       return -1;
     }
   }

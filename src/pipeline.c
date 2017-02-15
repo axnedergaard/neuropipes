@@ -12,7 +12,6 @@
 #include <signal.h>
 
 #define INITIAL_MAX 8
-#define MAX_PARAM_LEN 32
 
 static int next_id = 0;
 static int quit = 0;
@@ -194,18 +193,6 @@ int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
   return 1;   
 }
 
-int pipeline_remove_edge(pipeline* pl, int u, int v)  {  //TODO fix (not working proper)
-  if (linkedlist_remove(pl->adjacency_list[u], (void*)(intptr_t)v) == 0)  {
-    return 0;
-  }
-  if (linkedlist_remove(pl->in_data[u], &pl->nodes[v]->output) == 0)  {
-    return 0;
-  }
-  return 1;
-}
-
-
-
 int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
   pipe_* p = build_pipe(spec, concurrent);
 
@@ -228,28 +215,8 @@ int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
   return pipe_get_id(p);  //return pipe_ id
 }
 
-int pipeline_remove(pipeline* pl, int pid)  {  //TODO (working?)
-  pipe_* p = pipeline_get_pipe(pl, pid);
-  if (p == NULL)  {
-    fprintf(stderr, "pipeline_remove: pipe_ not in pipeline\n");
-    return 0;
-  }
-  else  {
-    pipe_* successor = NULL;
-    while ((successor = linkedlist_iterate(pl->adjacency_list[pid])) != NULL)  {
-      if (pipeline_remove_edge(pl, pid, pipe_get_id(successor)))  {
-        fprintf(stderr, "pipeline_remove: failed to remove edge\n");
-        return 0;
-      } 
-    } 
-    pipe_destroy(p);
-    return 1;
-  }
-}
-
-int pipeline_sort(pipeline* pl)  {  //make ordered sort, filling in empty gaps?
-  //make ordered sort...
-  //for every unused source node (in edges = 0), reduce in edge of each successor node by 1, and make the successor node a source node if it has no more in edges
+int pipeline_sort(pipeline* pl)  { 
+  //in-order sort: for every unused source node (in edges = 0), reduce in edge of each successor node by 1, and make the successor node a source node if it has no more in edges (Dijkstra)
   int added = 0;
   int in[pl->nodes_n];  //in edges
   for (int i = 0; i < pl->nodes_n; i++)  {  //set in edges
@@ -319,7 +286,6 @@ int pipeline_run(pipeline* pl)  {
   }
 
   double total_time_before = get_clock_time(); 
-  //double interval = 1.0;
 
   //run concurrent pipes
   for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  { 
@@ -385,25 +351,10 @@ int pipeline_run(pipeline* pl)  {
     fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(p->debug));
     pipe_kill(p, pl->in_data[pl->sort[i]]);  //TODO check for fail?
   }
+
   //print total run time
   double total_time = get_clock_time() - total_time_before;
   fprintf(stdout, "total run time: %fs\n", total_time);
 
   return 1;
 }
-
-/*
-pipe_* pipeline_iterate(pipeline* pl)  {
-  //init iterater if appropriate
-  if (pl->iterater < 0)  {  
-    pl->iterater = 0;
-  }
-  if (pl->iterater < pl->nodes_n)  {  //more entries left
-    return pl->nodes[pl->iterater];
-  } 
-  else  {  //iterater finished
-    pl->iterater = -1;
-    return NULL;
-  }
-}
-*/

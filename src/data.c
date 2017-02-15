@@ -81,33 +81,41 @@ void data_reset_readers(data *d)  {  //to allow killed thread to finish without 
 }
 
 void read_lock(data *d)  {
-  pthread_mutex_lock(&d->mutex);
-  while ((d->kill != 1) && (d->writes == 0))  {
-    pthread_cond_wait(&d->cond_written, &d->mutex);
+  if (d->blocking)  {
+    pthread_mutex_lock(&d->mutex);
+    while ((d->kill != 1) && (d->writes == 0))  {
+      pthread_cond_wait(&d->cond_written, &d->mutex);
+    }
   }
 }
 
 void write_lock(data *d)  {
-  pthread_mutex_lock(&d->mutex);
-  while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
-    pthread_cond_wait(&d->cond_read, &d->mutex);
+  if (d->blocking)  {
+    pthread_mutex_lock(&d->mutex);
+    while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
+      pthread_cond_wait(&d->cond_read, &d->mutex);
+    }
   }
 }
 
 void write_unlock(data *d)  {
-  d->reads = 0;
-  d->writes++;
-  pthread_cond_broadcast(&d->cond_written);
-  pthread_mutex_unlock(&d->mutex);
+  if (d->blocking)  {
+    d->reads = 0;
+    d->writes++;
+    pthread_cond_broadcast(&d->cond_written);
+    pthread_mutex_unlock(&d->mutex);
+  }
 }
 
 void read_unlock(data *d)  {
-  d->reads++;
-  if (d->reads >= d->readers)  {
-    d->writes = 0;
-    pthread_cond_broadcast(&d->cond_read);
+  if (d->blocking)  {
+    d->reads++;
+    if (d->reads >= d->readers)  {
+      d->writes = 0;
+      pthread_cond_broadcast(&d->cond_read);
+    }
+    pthread_mutex_unlock(&d->mutex); 
   }
-  pthread_mutex_unlock(&d->mutex); 
 }
 
 data* data_create_from_string(char *str)  {
@@ -125,32 +133,6 @@ data* data_create_from_string(char *str)  {
   } 
 }
 
-/*
-data *data_create_from_edf(char *filename, int* cp, int *np, int *setp)  {  //TODO
-  struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
-  if (edfopen_file_readonly(filename, hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
-    fprintf(stderr, "data_create_from_edf: failed to open file\n");
-  } 
-
-  int c = hdr->edfsignals; //number of channelss
-
-  struct edf_param_struct param = hdr->signalparam[0]; //assume same number of samples in every channel
-  int s = param.smp_in_datarecord;  //number of samples
-
-  edfclose_file(hdr->handle);
-
-  int n = 2;  //assume 2 dimensions
-  int shape[n];
-  int stride[n];
-
-  shape[0] = c;
-  shape[1] = s;
-  stride[0] = 1;
-  stride[1] = 1;
- 
-  return data_create(n, shape, stride);
-}
-*/
 int data_destroy(data *d)  {
   free(d->buffer);
   free(d->shape);
@@ -170,12 +152,6 @@ int data_type(data *d)  {  //complex if last dimension stride is larger than 1 (
   else  {
     return TYPE_REAL;
   }
-}
-
-int data_ready(data *d)  {  //if (new) data has been written to buffer, i.e. buffer ready
-  //return d->writes != 0;
-  if (d->writes == 0)  return 0;
-  else  return 1;
 }
 
 void data_broadcast_read(data *d)  {
@@ -231,9 +207,7 @@ int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
   int c = d->shape[0];
   int n = d->shape[1];
  
-  if (d->blocking == 1)  {
-    read_lock(d);
-  }
+  read_lock(d);
  
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
@@ -241,9 +215,7 @@ int data_copy_from_data_real_to_complex(data *d, double *buf)  {  //only 2D atm
     }
   }
   
-  if (d->blocking == 1)  {
-    read_unlock(d);
-  }
+  read_unlock(d);
 
   return 1;
 }
@@ -252,9 +224,7 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {  //TODO blocking
   int c = d->shape[0];
   int n = d->shape[1];
 
-  if (d->blocking == 1)  {
-    write_lock(d);
-  }
+  write_lock(d);
 
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
@@ -262,9 +232,7 @@ int data_copy_to_data_complex_to_real(data *d, double *buf)  {  //TODO blocking
     }
   }
 
-  if (d->blocking == 1)  {
-    write_unlock(d);
-  }
+  write_unlock(d);
 
   return 1;
 }
@@ -275,18 +243,14 @@ int data_copy_to_data(data *d, double *buf)  {
     len *= d->shape[i];
   }
 
-  if (d->blocking == 1)  {
-    write_lock(d);
-  }
+  write_lock(d);
 
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
   //  printf("copied to %f\n", d->buffer[i]);
   }
 
-  if (d->blocking == 1)  {
-    write_unlock(d);
-  }
+  write_unlock(d);
   
   return 1;
 }
@@ -297,18 +261,15 @@ int data_copy_from_data(data *d, double *buf)  {
     len *= d->shape[i];
   }
 
-  if (d->blocking == 1)  {
-    read_lock(d);
-  }
+  read_lock(d);
 
   for (int i = 0; i < len; i++)  {
     buf[i] = d->buffer[i];
     //buf + i*8) = d->buffer[i];
   }
   
-  if (d->blocking == 1)  {
-    read_unlock(d);
-  }
+  read_unlock(d);
+  
   return 1; 
 }
 
@@ -316,9 +277,7 @@ int data_write(data *d, FILE* f)  {
   int c = d->shape[0];
   int n = d->shape[1];
 
-  if (d->blocking == 1)  {
-    read_lock(d);
-  }
+  read_lock(d);
 
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
@@ -328,9 +287,7 @@ int data_write(data *d, FILE* f)  {
     fprintf(f, "\n");
   }
 
-  if (d->blocking == 1)  {
-    read_unlock(d);
-  }
+  read_unlock(d);
 
   return 1;
 }
@@ -367,9 +324,7 @@ int data_edf_write(data *d, int handle)  {
   int c = d->shape[0];
   int n = d->shape[1];
 
-  if (d->blocking == 1)  {
-    read_lock(d);
-  }
+  read_lock(d);
 
   for (int i = 0; i < c; i++)  {
     if (edfwrite_physical_samples(handle, (d->buffer + i*n)) != 0)  {  //stride?
@@ -377,9 +332,7 @@ int data_edf_write(data *d, int handle)  {
     }
   }
 
-  if (d->blocking == 1)  {
-    read_unlock(d);
-  }
+  read_unlock(d);
 
   return 1;
 }
@@ -388,27 +341,19 @@ int data_edf_read(data *d, int handle)  {  //don't open file every time?
   int c = d->shape[0];
   int n = d->shape[1];
 
-  if (d->blocking == 1)  {
-    write_lock(d);
-  }
+  write_lock(d);
+  
   for (int i = 0; i < c; i++)  {
     if (edfread_physical_samples(handle, i, n, (d->buffer + i*n)) < 0)  {
       printf("data_edf_read: failed to read samples\n"); 
     }
   }
 
-  if (d->blocking == 1)  {
-    write_unlock(d);
-  }
+  write_unlock(d);
   
   return 1;
 }
 
 int data_edf_close(int handle)  {
   return (edfclose_file(handle) == 0);
-}
-
-int data_read(data *d, FILE* f)  {
-  //TODO
-  return 1;
 }

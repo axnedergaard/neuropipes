@@ -9,7 +9,7 @@
 
 int main()  {
   int shmid;
-  key_t key = 6667;
+  key_t key = 42;
   char *shm;
   char *s;
 

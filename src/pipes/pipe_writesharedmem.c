@@ -66,8 +66,7 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   int *stride = input->stride;
   int data_len = input->len;
 
-  //wait for read? TODO bad
-  if (data_blocking(input) == 1)  read_lock(input);
+  read_lock(input);
  
   //WRITE
   char *s = aux->shm;
@@ -99,7 +98,7 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
     }
   }
   
-  if (data_blocking(input) == 1)  read_unlock(input);  //TODO bad
+  read_unlock(input);  
  
   free(buffer);
 
