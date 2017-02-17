@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+static pthread_t mtid; //main thread id
+
 data* data_create(int n, int *shape, int *stride)  {
   data *d = (data*)malloc(sizeof(data));
   if (d == NULL)  {
@@ -38,6 +40,10 @@ data* data_create(int n, int *shape, int *stride)  {
   return d;
 }
 
+void data_set_mtid()  {
+  mtid = pthread_self();
+}
+
 int data_make_blocking(data *d)  {  //make data blocking
   pthread_mutex_init(&d->mutex, NULL);  //TODO check init success
   pthread_cond_init(&d->cond_read, NULL);
@@ -54,14 +60,6 @@ int data_blocking(data *d)  {
   return d->blocking;
 }
 
-void data_reset_reads(data *d)  {
-  d->reads = 0;
-}
-
-void data_increment_reads(data *d)  {
-  d->reads++;
-}
-
 void data_increment_readers(data *d)  {
   d->readers++;
 }
@@ -75,13 +73,9 @@ int data_unblock(data *d)  {
   return 1;
 }
 
-void data_reset_readers(data *d)  {  //to allow killed thread to finish without waiting for data to be read
-  d->readers = 0;
-}
-
 void read_lock(data *d)  {
   if (d->blocking)  {
-    pthread_mutex_lock(&d->mutex);
+    pthread_mutex_lock(&d->mutex); 
     while ((d->kill != 1) && (d->writes == 0))  {
       pthread_cond_wait(&d->cond_written, &d->mutex);
     }
@@ -121,7 +115,7 @@ data* data_create_from_string(char *str)  {
   if (strcmp(str, "SINGLE") == 0)  {
     return data_create(0, NULL, NULL);
   }
-  else if (strcmp(str, "EMOTIV") == 0)  {  //emotiv 14 channels 8 readings
+  else if (strcmp(str, "EMOTIV") == 0)  {  //emotiv 14 channels 128 readings
     int shape[2] = {14, 128};
     int stride[2] = {1, 1};
     return data_create(2, shape, stride);

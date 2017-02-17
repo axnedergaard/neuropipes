@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include "linkedlist.h"
 
 #define TYPE_REAL 0
 #define TYPE_COMPLEX 1
@@ -26,6 +27,8 @@ struct data {
   int kill;
 };
 
+void data_set_mtid();
+
 int data_type(data*);  //get type (e.g. real or complex) from data
 int data_size(data*);
 int data_ready(data*);
@@ -43,10 +46,7 @@ void read_lock(data*);
 void write_lock(data*);
 void read_unlock(data*);
 void write_unlock(data*);
-void data_reset_reads(data*);
-void data_increment_reads(data*);
 void data_increment_readers(data*);
-void data_reset_readers(data*);
 int data_blocking(data*);
 void data_broadcast_read(data*);
 

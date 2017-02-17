@@ -93,6 +93,7 @@ pipeline* pipeline_create()  {
   pl->interval = 0;
 
   piperegistry_init();
+  data_set_mtid();
 
   return pl;
 }
@@ -335,16 +336,17 @@ int pipeline_run(pipeline* pl)  {
     }
   }
 
+  //stop threads for concurrent pipes
   for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  {
     pipe_* p = pl->nodes[pl->c_sort[i]];
     concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop thread
-    if (p->output != NULL)  {
+    if (p->output != NULL)  {  //unblock data structures so threads don't wait indefinitely
       data_unblock(p->output);
     }
     pthread_join(*(concurrent_pipe_thread(p->concurrent_pipe)), NULL); //wait for thread to stop 
   }
 
-  //kill concurrent pipes, print pipe averages run times
+  //kill pipes, print pipe averages run times
   for (int i = 0; i < pl->nodes_n; i++)  {
     pipe_* p = pl->nodes[pl->sort[i]];
     double pipe_average_time = debug_pipe_average_time(p->debug);

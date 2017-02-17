@@ -72,6 +72,9 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
           while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
             data *d = *data_ptr;
             if (data_blocking(d))  {
+              if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is bugged
+                printf("pipe_init: WARNING concurrent pipes reading blocking input is bugged\n");
+              }
               data_increment_readers(d); 
             }
           }

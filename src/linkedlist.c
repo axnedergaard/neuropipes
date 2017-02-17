@@ -36,7 +36,20 @@ int linkedlist_destroy(linkedlist* l)  {  //TODO destroy nodes?
   return 1;
 }
 
-int linkedlist_insert(linkedlist* l, void* d)  {
+int linkedlist_clear(linkedlist *l)  {
+  linkedlist_node *cur = l->head;
+  while (l->size > 0)  {
+    linkedlist_node *next = cur->next;
+    free(cur);
+    cur = next;
+    l->size--;
+  }
+  l->head = NULL;
+  l->tail = NULL;
+  return 1;
+}
+
+int linkedlist_insert(linkedlist *l, void *d)  {
   linkedlist_node* prev = NULL;
   linkedlist_node* cur = l->head;
   while (cur != NULL)  {

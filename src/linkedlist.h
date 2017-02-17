@@ -8,6 +8,7 @@ linkedlist *linkedlist_create();
 int linkedlist_destroy(linkedlist*);
 int linkedlist_insert(linkedlist*, void*);
 int linkedlist_remove(linkedlist*, void*);
+int linkedlist_clear(linkedlist*);
 int linkedlist_size(linkedlist*);
 void *linkedlist_head(linkedlist*);
 void *linkedlist_tail(linkedlist*);
