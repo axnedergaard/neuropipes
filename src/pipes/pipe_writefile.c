@@ -20,6 +20,8 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   char *fn = "recording.edf";
   //get file name from param
 
+  //get sample frequency param? TODO
+
   //open edf file for writing
   int c = input->shape[0];
   int n = input->shape[1];

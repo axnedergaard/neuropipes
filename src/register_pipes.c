@@ -4,6 +4,9 @@
 int dummyemotiv_init(pipe_*, linkedlist*);
 int dummyemotiv_run(pipe_*, linkedlist*);
 int dummyemotiv_kill(pipe_*, linkedlist*);
+int dummy_computation_init(pipe_*, linkedlist*);
+int dummy_computation_run(pipe_*, linkedlist*);
+int dummy_computation_kill(pipe_*, linkedlist*);
 int emotiv_init(pipe_*, linkedlist*);
 int emotiv_run(pipe_*, linkedlist*);
 int emotiv_kill(pipe_*, linkedlist*);
@@ -32,9 +35,9 @@ int writesharedmem_init(pipe_*, linkedlist*);
 int writesharedmem_run(pipe_*, linkedlist*);
 int writesharedmem_kill(pipe_*, linkedlist*);
 
-
 int register_pipes()  {
   piperegistry_register("DUMMYEMOTIV", &dummyemotiv_init, &dummyemotiv_run, &dummyemotiv_kill, "");
+  piperegistry_register("DUMMYCOMPUTATION", &dummy_computation_init, &dummy_computation_run, &dummy_computation_kill, "");
   piperegistry_register("EMOTIV", &emotiv_init, &emotiv_run, &emotiv_kill, "");
   piperegistry_register("FOURIERTRANSFORM", &fouriertransform_init, &fouriertransform_run, &fouriertransform_kill, "");
   piperegistry_register("INVERSEFOURIERTRANSFORM", &inversefouriertransform_init, &inversefouriertransform_run, &inversefouriertransform_kill, "");

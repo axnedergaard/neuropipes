@@ -20,8 +20,7 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "writesharedmem_init: writesharedmem pipe must have an input\n");
     return -1;
   }
-  p->output = NULL;  //writesharedmem pipe has no output
- 
+  p->output = NULL;  //writesharedmem pipe has no output 
 
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)malloc(sizeof(struct writesharedmem_aux));
 

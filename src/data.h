@@ -31,7 +31,7 @@ void data_set_mtid();
 
 int data_type(data*);  //get type (e.g. real or complex) from data
 int data_size(data*);
-int data_ready(data*);
+int data_len(data*);
 
 data *data_create(int, int*, int*);
 data *data_create_from_string(char*);

@@ -48,6 +48,7 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, readfile, print);
 */
 
+/*
   //python bandpass
   int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
   int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
@@ -56,7 +57,14 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, emotiv, filt1);
   pipeline_insert_edge(pl, emotiv, writemem1);
   pipeline_insert_edge(pl, filt1, writemem2);
+*/
 
+  //dummy
+  int input = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 0);
+  int computation = pipeline_insert(pl, "DUMMYCOMPUTATION;replace=1,replace_value=3.14", 0);
+//  int output = pipeline_insert(pl, "PRINT", 0);
+  pipeline_insert_edge(pl, input, computation);
+//  pipeline_insert_edge(pl, computation, output);
 
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");

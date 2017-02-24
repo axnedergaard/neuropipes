@@ -138,6 +138,10 @@ int data_size(data *d)  {  //returns size of buffer in memory TODO possible to u
   return d->len*sizeof(double);
 }
 
+int data_len(data *d)  {
+  return d->len;
+}
+
 int data_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
   if (d->stride[d->n-1] > 1)  {
     return TYPE_COMPLEX;

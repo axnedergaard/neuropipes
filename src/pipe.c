@@ -69,13 +69,15 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
             }
           }
           data **data_ptr = NULL;
-          while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
-            data *d = *data_ptr;
-            if (data_blocking(d))  {
-              if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is bugged
-                printf("pipe_init: WARNING concurrent pipes reading blocking input is bugged\n");
+          if (l != NULL)  {
+            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
+              data *d = *data_ptr;
+              if (data_blocking(d))  {
+                if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is bugged
+                  printf("pipe_init: WARNING concurrent pipes reading blocking input is bugged\n");
+                }
+                data_increment_readers(d); 
               }
-              data_increment_readers(d); 
             }
           }
           p->status = 0;  //inited
@@ -96,18 +98,25 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
 int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input 
   if (p != NULL)  {
     if (p->run != NULL)  {
+      if (p->status == -1)  {  //not init
+        fprintf(stderr, "pipe_run: pipe %p has not been been init\n", p);
+        return 0;
+      }
       int status = p->run(p, l);
-      if (status >= 0)  { 
+      if (status >= 0)  {
+        p->status = 1; 
         debug_pipe_increment_times_run(p->debug);  //DEBUG
-        return status;
+        return 1;
       }
       else  {
         fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
+        p->status = -2;
+        return 0;
       }
     }
     else  {
       fprintf(stderr, "pipe_run: pipe has no call\n");
-      return -1;
+      return 0;
     }
   }
   return 0;
