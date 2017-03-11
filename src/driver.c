@@ -59,12 +59,39 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, filt1, writemem2);
 */
 
+  /*
   //dummy
   int input = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 0);
   int computation = pipeline_insert(pl, "DUMMYCOMPUTATION;replace=1,replace_value=3.14", 0);
 //  int output = pipeline_insert(pl, "PRINT", 0);
   pipeline_insert_edge(pl, input, computation);
 //  pipeline_insert_edge(pl, computation, output);
+*/
+
+  /*
+  //power spectrum
+  int input = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 0);
+  int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
+  int power = pipeline_insert(pl, "POWER", 0);
+  int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  int print = pipeline_insert(pl, "PRINT", 0);
+  int print2 = pipeline_insert(pl, "PRINT", 0);
+  pipeline_insert_edge(pl, input, fft);
+  pipeline_insert_edge(pl, input, print2);
+  pipeline_insert_edge(pl, fft, power);
+  pipeline_insert_edge(pl, power, shared);
+  pipeline_insert_edge(pl, fft, print);
+*/
+ 
+  int input = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 0);
+  int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
+  int power = pipeline_insert(pl, "POWER", 0);
+  int shared1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  int shared2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
+  pipeline_insert_edge(pl, input, fft);
+  pipeline_insert_edge(pl, fft, power);
+  pipeline_insert_edge(pl, input, shared1);
+  pipeline_insert_edge(pl, power, shared2);
 
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");

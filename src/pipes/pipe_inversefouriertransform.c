@@ -34,12 +34,12 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_p failed\n");
     return 0;
   }
-  buffer->ft_in = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  buffer->ft_in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*c*n);
   if (buffer->ft_in == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_in failed\n");
     return 0;
   }
-  buffer->ft_out = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  buffer->ft_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*c*n);
   if (buffer->ft_out == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for buffer ft_out failed\n");
     return 0;

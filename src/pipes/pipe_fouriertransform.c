@@ -35,12 +35,12 @@ int fouriertransform_init(pipe_* p, linkedlist* l)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for ft_aux ft_p failed\n");
     return 0;
   }
-  ft_aux->ft_in = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  ft_aux->ft_in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*c*n);
   if (ft_aux->ft_in == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for ft_aux ft_in failed\n");
     return 0;
   }
-  ft_aux->ft_out = (fftw_complex*)malloc(sizeof(fftw_complex)*c*n);
+  ft_aux->ft_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*c*n);
   if (ft_aux->ft_out == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for ft_aux ft_out failed\n");
     return 0;
