@@ -169,13 +169,13 @@ int pipeline_expand(pipeline *pl)  {
     return 0;
   }
   pl->sort = sort_new;
-  linkedlist **adjacency_list_new = realloc(pl->adjacency_list, sizeof(int)*pl->nodes_max);
+  linkedlist **adjacency_list_new = realloc(pl->adjacency_list, sizeof(linkedlist*)*pl->nodes_max);
   if (adjacency_list_new == NULL)  {
     fprintf(stderr, "pipeline_expand: failed to realloc adjacency_list\n");
     return 0;
   }
   pl->adjacency_list = adjacency_list_new;
-  linkedlist **in_data_new = realloc(pl->in_data, sizeof(int)*pl->nodes_max);
+  linkedlist **in_data_new = realloc(pl->in_data, sizeof(linkedlist*)*pl->nodes_max);
   if (in_data_new == NULL)  {
     fprintf(stderr, "pipeline_expand: failed to realloc in_data\n");
     return 0;
