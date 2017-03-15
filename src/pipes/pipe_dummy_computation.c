@@ -5,13 +5,14 @@
 #include <time.h>
 #include <string.h>
 
+//dummy_computation pipe used for testing
+
 struct dummy_computation_aux {
   int replace;
   double replace_value;
   double *buffer;
 };
 
-//dummy_computation pipe used for testing
 int dummy_computation_init(pipe_* p, linkedlist* l)  {
   data *input = *(data**)linkedlist_head(l);
   if (input == 0)  {

@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SPEC_MAX 32
+//Butterworth filter using fidlib
+
+#define SPEC_MAX 32  //max length of fidlib pipe specification
 
 struct filter_aux {
   FidFilter *ff;
@@ -16,8 +18,6 @@ struct filter_aux {
   double *output;
 };
 
-//TODO work on complex signals?
-
 int filter_init(pipe_* p, linkedlist* l)  {
   data* input = *(data**)linkedlist_head(l);
   if (linkedlist_size(l) != 1)  {
@@ -27,21 +27,21 @@ int filter_init(pipe_* p, linkedlist* l)  {
   pipe_set_output(p, output);
   
   //get parameters 
-  char pass[] = "band";
-  int order = 2;
-  int lc = 8;  //lower cutoff
-  int hc = 12;  //higher cutoff
-
-  char *pass_param = get_parameter(p, "pass"); //band, high, low...
+  char pass[] = "band";  //filter pass type
+  int order = 2; //filter order
+  int lc = 8;  //lower cutoff frequency
+  int hc = 12;  //higher (upper) cutoff frequency
+  int rate = 128; //sampling rate
+  char *pass_param = get_parameter(p, "pass"); 
   if (pass_param != NULL)  {
-    if (strcmp(pass_param, "band") == 0)  {  //redundant?
-      strcpy(pass, "band");  //TODO unsafe
+    if (strcmp(pass_param, "band") == 0)  {  
+      strncpy(pass, "band", PARAM_MAX); 
     }
     else if (strcmp(pass_param, "high") == 0)  {
-      strcpy(pass, "high");
+      strncpy(pass, "high", PARAM_MAX);
     }
     else if (strcmp(pass_param, "low") == 0)  {
-      strcpy(pass, "low");
+      strncpy(pass, "low", PARAM_MAX);
     }
   } 
   free(pass_param);
@@ -60,6 +60,11 @@ int filter_init(pipe_* p, linkedlist* l)  {
     order = atoi(order_param);
   }
   free(order_param);
+  char *rate_param = get_parameter(p, "rate");
+  if (rate_param != NULL)  {
+    rate = atoi(order_param);
+  }
+  free(rate_param);
  
   struct filter_aux *aux = (struct filter_aux*)malloc(sizeof(struct filter_aux));  
   if (aux == NULL)  {
@@ -79,16 +84,21 @@ int filter_init(pipe_* p, linkedlist* l)  {
     snprintf(spec, SPEC_MAX, "LpBu%d/%d", order, hc);
   }
 
-  int c = data_get_shape(output)[0];
-  double rate = 128; //param?
-  fid_parse(rate, &spec, &aux->ff);  //TODO error check
+  //create filter
+  char *error = fid_parse(rate, &spec, &aux->ff);
+  if (error != NULL)  {
+    fprintf(stderr, "pipe_filter_init: fidlib parse error %s\n", error);
+  }
+  free(spec);
+
+  int c = data_get_shape(output)[0];  //number of channels
+  for (int i = 0; i < c; i++)  {
+    aux->buf[i] = fid_run_newbuf(aux->run);
+  }
   aux->run = fid_run_new(aux->ff, &aux->func);
   aux->input = (double*)malloc(data_size(output));
   aux->output = (double*)malloc(data_size(output));
   aux->buf = (void**)malloc(c*sizeof(void*));
-  for (int i = 0; i < c; i++)  {
-    aux->buf[i] = fid_run_newbuf(aux->run);
-  }
 
   pipe_set_auxiliary(p, aux);
  
@@ -103,7 +113,7 @@ int filter_run(pipe_ *p, linkedlist *l)  {
   }
   data *output = pipe_get_output(p);
 
-  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);;
+  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);
 
   //copy from data
   data_copy_from_data(input, (void*)aux->input);
@@ -125,5 +135,10 @@ int filter_run(pipe_ *p, linkedlist *l)  {
 }
 
 int filter_kill(pipe_* p, linkedlist* l)  {
+  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);
+  fid_run_freebuf(aux->buf);
+  fid_run_free(aux->run);
+  free(aux->input);
+  free(aux->output);
   return 1;
 }

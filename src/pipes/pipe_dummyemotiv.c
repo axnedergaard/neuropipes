@@ -55,6 +55,7 @@ int dummyemotiv_run(pipe_* p, linkedlist* l)  {
 }
 
 int dummyemotiv_kill(pipe_* p, linkedlist* l)  {
-
+  struct dummyemotiv_aux *aux = (struct dummyemotiv_aux*)pipe_get_auxiliary(p);
+  free(aux->buffer);
   return 1;
 }

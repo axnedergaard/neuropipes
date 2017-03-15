@@ -20,7 +20,6 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   
   pipe_set_output(p, data_create_real_from_complex(input));
 
-  //init buffer and FFT TODO mem alloc fail frees?
   int *shape = data_get_shape(input);
   int c = shape[0];  //number of channels
   int n = shape[1]/2;  //number of recordings, divide by 2 because input complex
@@ -82,5 +81,9 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
 }
 
 int inversefouriertransform_kill(pipe_* p, linkedlist* l)  {
+  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)pipe_get_auxiliary(p);
+  fftw_destroy_plan(*aux->ft_p);
+  fftw_free(aux->ft_in);
+  fftw_free(aux->ft_out);
   return 1;
 }

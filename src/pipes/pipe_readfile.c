@@ -46,16 +46,16 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
 }
 
 int readfile_run(pipe_ *p, linkedlist *l)  {
+  data *output = pipe_get_output(p);
   struct readfile_aux *aux = (struct readfile_aux*)pipe_get_auxiliary(p);
 
-  data *output = pipe_get_output(p);
   double *buffer = data_get_buffer(output);
 
-  //read
   int *shape = data_get_shape(output);
   int c = shape[0];
   int n = shape[1];
 
+  //read
   write_lock(output);
 
   for (int i = 0; i < c; i++)  {
@@ -77,6 +77,4 @@ int readfile_run(pipe_ *p, linkedlist *l)  {
 
 int readfile_kill(pipe_* p, linkedlist* l)  {
   return (edfclose_file(((struct readfile_aux*)pipe_get_auxiliary(p))->handle) == 0);
-
-
 }

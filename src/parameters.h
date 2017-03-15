@@ -3,7 +3,11 @@
 
 #include "pipe.h"
 
-int tokenise(char *spec, char **type, int *params_n, char ***params);
-char *get_parameter(pipe_*, char *s);
+#define PARAM_MAX 32  //max length of parameter
+
+int tokenise(char*, char**, int*, char***); //separate pipe specification into type, number of parameters and parameters
+char *get_parameter(pipe_*, char*);  //get parameter as string
+int get_parameter_int(pipe_*, char*);
+double get_parameter_double(pipe_*, char*);
 
 #endif

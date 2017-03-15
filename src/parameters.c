@@ -2,23 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-int tokenise(char *spec, char **ptype, int *pparams_n, char ***pparams)  {
+int tokenise(char *spec, char **p_type, int *p_params_n, char ***p_params)  {
   int params_n = 0;
   char **params = NULL;
   char *type = NULL;
+
   char *spec_token = strdup(spec);
-  char *token = strtok(spec_token, ";");
+  char *token = strtok(spec_token, ";");  //separate type and parameters
   if (token != NULL)  {
-    type = strdup(token);  
-    token = strtok(NULL, ";"); //parameters
+    type = strdup(token);  //type
+    //separate parameters
+    token = strtok(NULL, ";");
     if (token != NULL)  { 
-      //get param_n
+      //get number of params
       params_n++;
       for (int i = 0; i < strlen(token); i++)  {
         if (token[i] == ',')  {
           params_n++;
         }
       }
+      //get params
       params = (char**)malloc(sizeof(char*)*params_n);
       token = strtok(token, ",");
       for (int i = 0; i < params_n; i++)  {
@@ -29,22 +32,27 @@ int tokenise(char *spec, char **ptype, int *pparams_n, char ***pparams)  {
   }
   free(spec_token);
   
-  *ptype = type;
-  *pparams_n = params_n;
-  *pparams = params;
+  *p_type = type;
+  *p_params_n = params_n;
+  *p_params = params;
 
   return 1;
 }
 
 char *get_parameter(pipe_* p, char *s)  {
-  char *s_tok = NULL; 
-  for (int i = 0; i < pipe_get_params_n(p); i++)  {
+  char *matched_param = NULL;
+  char *s_tok = NULL;
+  int matched = 0;
+  //check if any parameters of p match s, end if match
+  for (int i = 0; matched == 0 && i < pipe_get_params_n(p); i++)  {
     s_tok = strdup(pipe_get_params(p)[i]);
     if (strcmp(strtok(s_tok, "="), s) == 0)  {  //param matched
-      return strdup(strtok(NULL, "="));
+      matched_param = strdup(strtok(NULL, "="));
+      matched = 1;
     }
     free(s_tok);
   }
-  return NULL;  //fail
+  return matched_param; //note: user must dealloc matched_param themselves
 }
+
 

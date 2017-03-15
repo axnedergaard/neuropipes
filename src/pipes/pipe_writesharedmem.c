@@ -57,7 +57,9 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
 
 int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_head(l);
-
+  if (input == NULL)  {
+    fprintf(stderr, "writesharedmem_run: pipe must have an input\n");
+  }
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)pipe_get_auxiliary(p);
 
   int *shape, *stride;
@@ -65,11 +67,12 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   int data_len = data_get_len(input);
   double *input_buffer = data_get_buffer(input);
 
-  read_lock(input);
- 
-  //WRITE
   char *s = aux->shm;
   char *buffer = (char*)malloc(sizeof(char)*DLEN); //string containing doubles to be written
+  
+  //write to memory
+  read_lock(input);
+ 
   //n
   sprintf(buffer, "%f", (double)n);
   for (int i = 0; i < DLEN; i++)  {
@@ -106,9 +109,7 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
 
 int writesharedmem_kill(pipe_* p, linkedlist* l)  {
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)pipe_get_auxiliary(p);
-
   shmdt(aux->shm);
   shmctl(aux->shmid, 0, NULL);
- 
   return 1;
 }

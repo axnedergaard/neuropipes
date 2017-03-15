@@ -8,7 +8,7 @@ struct pipe {
   int id;
   data *output;
   int status;  // <-1:error -1:not init 0:not complete >0:complete
-  void *auxiliary; //auxiliary data structure, e.g. for emokit 
+  void *auxiliary; //auxiliary data structure
   int(*init)(pipe_*, linkedlist*);
   int(*run)(pipe_*, linkedlist*);
   int(*kill)(pipe_*, linkedlist*);
@@ -54,32 +54,34 @@ int pipe_destroy(pipe_ *p)  {
   return 0;
 }
 
-int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
+int pipe_init(pipe_* p, linkedlist* l)  {
   if (p != NULL)  {
     if (p->init != NULL)  {
-        if (p->init(p, l) == 1)  {
-          if (p->concurrent == 1)  {  //concurrent pipe
+        if (p->init(p, l) == 1)  {  //init success
+	  //if concurrent pipe, create concurrent pipe struct and make output data blocking
+          if (p->concurrent == 1)  { 
             p->concurrent_pipe = concurrent_pipe_create();
             if (p->concurrent_pipe == NULL)  {
               fprintf(stderr, "pipe_init: failed to create concurrent pipe\n");
             }
             if (p->output != NULL)  {
-              data_make_blocking(p->output);  //make out data blocking
+              data_make_blocking(p->output);
             }
           }
+	  //increment readers for blocking inputs
           data **data_ptr = NULL;
           if (l != NULL)  {
-            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
+            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {  
               data *d = *data_ptr;
               if (data_get_blocking(d))  {
-                if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is bugged
-                  printf("pipe_init: WARNING concurrent pipes reading blocking input is bugged\n");
+                if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is not supported
+                  printf("pipe_init: warning concurrent pipes reading blocking input is not supported\n");
                 }
                 data_increment_readers(d); 
               }
             }
           }
-          p->status = 0;  //inited
+          p->status = 0;  //initialised
           return 1;
         }
         else  {
@@ -94,20 +96,20 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
   return 0; 
 }
 
-int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input 
+int pipe_run(pipe_* p, linkedlist* l)  {
   if (p != NULL)  {
     if (p->run != NULL)  {
-      if (p->status == -1)  {  //not init
+      if (p->status == -1)  {  //pipe not initialised
         fprintf(stderr, "pipe_run: pipe %p has not been been init\n", p);
         return 0;
       }
-      int status = p->run(p, l);
-      if (status >= 0)  {
+      int status = p->run(p, l);  //run
+      if (status >= 0)  {  //run success
         p->status = 1; 
         debug_pipe_increment_times_run(p->debug_pipe);  //DEBUG
         return 1;
       }
-      else  {
+      else  {  //run failure
         fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
         p->status = -2;
         return 0;

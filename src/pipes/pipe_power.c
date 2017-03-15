@@ -10,7 +10,6 @@ int power_init(pipe_ *p, linkedlist *l)  {
     return 0;
   }
  
-  //2d for now
   int *input_shape, *input_stride;
   int n = data_spec(input, &input_shape, &input_stride);
   int shape[n], stride[n];
@@ -33,11 +32,9 @@ int power_run(pipe_ *p, linkedlist *l)  {
   data *output = pipe_get_output(p);
 
   double *buffer = (double*)malloc(data_size(output));
-
   int *input_shape, *input_stride;
   data_spec(input, &input_shape, &input_stride);
   double *input_buffer = data_get_buffer(input);
-
   int *output_shape;
   data_spec(output, &output_shape, NULL);
   int c = output_shape[0]; //channels

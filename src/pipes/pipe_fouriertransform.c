@@ -77,5 +77,9 @@ int fouriertransform_run(pipe_* p, linkedlist* l)  {
 }
 
 int fouriertransform_kill(pipe_* p, linkedlist* l)  {
+  struct fouriertransform_auxiliary *aux = (struct fouriertransform_auxiliary*)pipe_get_auxiliary(p);
+  fftw_destroy_plan(*aux->ft_p);
+  fftw_free(aux->ft_in);
+  fftw_free(aux->ft_out);
   return 1;
 }
