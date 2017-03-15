@@ -14,7 +14,6 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   if (input == NULL)  {  
     fprintf(stderr, "writefile_init: writefile pipe must have exactly 1 input\n");
   }
-  p->output = NULL;  //writefile pipe has no output
   struct writefile_aux *aux = (struct writefile_aux*)malloc(sizeof(struct writefile_aux)); 
 
   char *fn = "recording.edf";
@@ -23,8 +22,9 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   //get sample frequency param? TODO
 
   //open edf file for writing
-  int c = input->shape[0];
-  int n = input->shape[1];
+  int *shape = data_get_shape(input);
+  int c = shape[0];
+  int n = shape[1];
   int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
   for (int i = 0; i < c; i++)  {  //TODO params
    if (edf_set_samplefrequency(handle, i, n) != 0)  printf("failed to set sample frequency\n");
@@ -35,22 +35,23 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   }
 
   aux->handle = handle;
-  p->auxiliary = aux;
+
+  pipe_set_auxiliary(p, aux);
+
   return 1;
 }
 
 int writefile_run(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_head(l);
 
-//  data_edf_write(input, ((struct writefile_aux*)p->auxiliary)->handle);  
-  //data_write(input, f);
-  int c = input->shape[0];
-  int n = input->shape[1];
+  int *shape = data_get_shape(input);
+  int c = shape[0];
+  int n = shape[1];
 
   read_lock(input);
 
   for (int i = 0; i < c; i++)  {
-    if (edfwrite_physical_samples(((struct writefile_aux*)p->auxiliary)->handle, (input->buffer + i*n)) != 0)  {  //stride?
+    if (edfwrite_physical_samples(((struct writefile_aux*)pipe_get_auxiliary(p))->handle, (data_get_buffer(input) + i*n)) != 0)  {  //stride?
       fprintf(stderr, "writefile_run: failed to write to file\n");
     }
   }
@@ -61,5 +62,5 @@ int writefile_run(pipe_ *p, linkedlist *l)  {
 }
 
 int writefile_kill(pipe_* p, linkedlist* l)  {
-  return (edfclose_file(((struct writefile_aux*)p->auxiliary)->handle) == 0);
+  return (edfclose_file(((struct writefile_aux*)pipe_get_auxiliary(p))->handle) == 0);
 }

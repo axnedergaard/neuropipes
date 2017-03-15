@@ -33,34 +33,38 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
   shape[1] = n;
   stride[0] = 1;
   stride[1] = 1;
-  p->output = data_create(2, shape, stride);
+  pipe_set_output(p, data_create(2, shape, stride));
 
   struct readfile_aux *aux = (struct readfile_aux*)malloc(sizeof(struct readfile_aux));
   aux->current_set = 0;
   aux->set_n = set_n;
   aux->handle = hdr->handle;
 
-  p->auxiliary = aux;
+  pipe_set_auxiliary(p, aux);
 
   return 1;
 }
 
 int readfile_run(pipe_ *p, linkedlist *l)  {
-  struct readfile_aux *aux = (struct readfile_aux*)p->auxiliary;
+  struct readfile_aux *aux = (struct readfile_aux*)pipe_get_auxiliary(p);
+
+  data *output = pipe_get_output(p);
+  double *buffer = data_get_buffer(output);
 
   //read
-  int c = p->output->shape[0];
-  int n = p->output->shape[1];
+  int *shape = data_get_shape(output);
+  int c = shape[0];
+  int n = shape[1];
 
-  write_lock(p->output);
+  write_lock(output);
 
   for (int i = 0; i < c; i++)  {
-    if (edfread_physical_samples(aux->handle, i, n, (p->output->buffer + i*n)) < 0)  {
+    if (edfread_physical_samples(aux->handle, i, n, (buffer + i*n)) < 0)  {
       printf("data_edf_read: failed to read samples\n");
     }
   }
  
-  write_unlock(p->output); 
+  write_unlock(output); 
 
   aux->current_set++;
 
@@ -72,7 +76,7 @@ int readfile_run(pipe_ *p, linkedlist *l)  {
 }
 
 int readfile_kill(pipe_* p, linkedlist* l)  {
-  return (edfclose_file(((struct readfile_aux*)p->auxiliary)->handle) == 0);
+  return (edfclose_file(((struct readfile_aux*)pipe_get_auxiliary(p))->handle) == 0);
 
 
 }

@@ -16,9 +16,6 @@ int fouriertransform_kill(pipe_*, linkedlist*);
 int inversefouriertransform_init(pipe_*, linkedlist*);
 int inversefouriertransform_run(pipe_*, linkedlist*);
 int inversefouriertransform_kill(pipe_*, linkedlist*);
-int mean_init(pipe_*, linkedlist*);
-int mean_run(pipe_*, linkedlist*);
-int mean_kill(pipe_*, linkedlist*);
 int print_init(pipe_*, linkedlist*);
 int print_run(pipe_*, linkedlist*);
 int print_kill(pipe_*, linkedlist*);
@@ -44,7 +41,6 @@ int register_pipes()  {
   piperegistry_register("EMOTIV", &emotiv_init, &emotiv_run, &emotiv_kill, "");
   piperegistry_register("FOURIERTRANSFORM", &fouriertransform_init, &fouriertransform_run, &fouriertransform_kill, "");
   piperegistry_register("INVERSEFOURIERTRANSFORM", &inversefouriertransform_init, &inversefouriertransform_run, &inversefouriertransform_kill, "");
-  piperegistry_register("MEAN", &mean_init, &mean_run, &mean_kill, "");
   piperegistry_register("PRINT", &print_init, &print_run, &print_kill, "");
   piperegistry_register("FILTER", &filter_init, &filter_run, &filter_kill, "");
   piperegistry_register("WRITEFILE", &writefile_init, &writefile_run, &writefile_kill, "");

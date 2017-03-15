@@ -17,12 +17,12 @@ pipe_* build_pipe(char *spec, int concurrent)  {
     return NULL;
   }
   pipe_* p = pipe_create();  //TODO check alloc
-  p->init = pd->init;
-  p->run = pd->run;
-  p->kill = pd->kill;
-  p->concurrent = concurrent;  //TODO proper
-  p->params_n = params_n;
-  p->params = params;
+  pipe_set_init(p, pd->init);
+  pipe_set_run(p, pd->run);
+  pipe_set_kill(p, pd->kill);
+  pipe_set_concurrent(p, concurrent);
+  pipe_set_params_n(p, params_n);
+  pipe_set_params(p, params);
   
   return p;
 }

@@ -34,7 +34,8 @@ int main(int argc, char **argv)  {
   }
 
   //construct pipeline 
- /* 
+
+  /* 
   //write file
   int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 1);
   int writefile = pipeline_insert(pl, "WRITEFILE", 1);
@@ -48,17 +49,6 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, readfile, print);
 */
 
-/*
-  //python bandpass
-  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
-  int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
-  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
-  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
-  pipeline_insert_edge(pl, emotiv, filt1);
-  pipeline_insert_edge(pl, emotiv, writemem1);
-  pipeline_insert_edge(pl, filt1, writemem2);
-*/
-
   /*
   //dummy
   int input = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 0);
@@ -68,31 +58,75 @@ int main(int argc, char **argv)  {
 //  pipeline_insert_edge(pl, computation, output);
 */
 
-  /*
-  //power spectrum
-  int input = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 0);
-  int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
-  int power = pipeline_insert(pl, "POWER", 0);
-  int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
-  int print = pipeline_insert(pl, "PRINT", 0);
-  int print2 = pipeline_insert(pl, "PRINT", 0);
-  pipeline_insert_edge(pl, input, fft);
-  pipeline_insert_edge(pl, input, print2);
-  pipeline_insert_edge(pl, fft, power);
-  pipeline_insert_edge(pl, power, shared);
-  pipeline_insert_edge(pl, fft, print);
+/*
+  //functional filter
+  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
+  int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
+  int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
+  pipeline_insert_edge(pl, emotiv, filt1);
+  pipeline_insert_edge(pl, emotiv, writemem1);
+  pipeline_insert_edge(pl, filt1, writemem2);
 */
- 
+  
+  //functional power
   int input = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 0);
   int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
   int power = pipeline_insert(pl, "POWER", 0);
   int shared1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   int shared2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
   pipeline_insert_edge(pl, input, fft);
-  pipeline_insert_edge(pl, fft, power);
   pipeline_insert_edge(pl, input, shared1);
+  pipeline_insert_edge(pl, fft, power);
   pipeline_insert_edge(pl, power, shared2);
 
+
+ /* 
+  //performance simple
+  int input = pipeline_insert(pl, "EMOTIV", 1);
+  int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  pipeline_insert_edge(pl, input, shared);
+*/
+
+/* 
+  //performance complex
+  int input = pipeline_insert(pl, "EMOTIV", 1);
+  int shared1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  int shared2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
+  int shared3 = pipeline_insert(pl, "WRITESHAREDMEM;key=44", 0);
+  int shared4 = pipeline_insert(pl, "WRITESHAREDMEM;key=45", 0);
+  int shared5 = pipeline_insert(pl, "WRITESHAREDMEM;key=46", 0);
+  int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
+  int power = pipeline_insert(pl, "POWER", 0);
+  int file = pipeline_insert(pl, "WRITEFILE", 0); //filename?
+  int print = pipeline_insert(pl, "PRINT", 0); //filename?
+  int tbp = pipeline_insert(pl, "FILTER;pass=band,lc=4,hc=7", 0);
+  int abp = pipeline_insert(pl, "FILTER;pass=band,lc=8,hc=12", 0);
+  int bbp = pipeline_insert(pl, "FILTER;pass=band,lc=13,hc=25", 0); 
+  pipeline_insert_edge(pl, input, shared1);
+  pipeline_insert_edge(pl, input, file);
+  pipeline_insert_edge(pl, input, fft);
+  pipeline_insert_edge(pl, input, tbp);
+  pipeline_insert_edge(pl, input, abp);
+  pipeline_insert_edge(pl, input, bbp);
+  pipeline_insert_edge(pl, fft, power);
+  pipeline_insert_edge(pl, power, shared2);
+  pipeline_insert_edge(pl, fft, print);
+  pipeline_insert_edge(pl, tbp, shared3);
+  pipeline_insert_edge(pl, abp, shared4);
+  pipeline_insert_edge(pl, bbp, shared5);
+*/
+
+/*
+  //acceptance experiment (power)
+  int input = pipeline_insert(pl, "EMOTIV", 0);
+  int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
+  int power = pipeline_insert(pl, "POWER", 0);
+  int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
+  pipeline_insert_edge(pl, input, fft);
+  pipeline_insert_edge(pl, fft, power);
+  pipeline_insert_edge(pl, power, shared);
+*/
   //init and run
   if (pipeline_init(pl)) printf("[!]init\n");
   if (pipeline_run(pl)) printf("[!]run\n");

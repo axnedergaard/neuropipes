@@ -11,6 +11,7 @@ int linkedlist_remove(linkedlist*, void*);
 int linkedlist_clear(linkedlist*);
 int linkedlist_size(linkedlist*);
 void *linkedlist_head(linkedlist*);
+void *linkedlist_pop(linkedlist*);
 void *linkedlist_tail(linkedlist*);
 void *linkedlist_iterate(linkedlist*);
 int linkedlist_reset_iterater(linkedlist*);

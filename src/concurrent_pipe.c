@@ -21,16 +21,16 @@ void *concurrent_pipe_run(void *inp)  {
   int *quit = rinp->quit;
   linkedlist *input = rinp->input;
 
-  concurrent_pipe *pp = p->concurrent_pipe;
+  concurrent_pipe *pp = pipe_get_concurrent_pipe(p);
   while (pp->running == 1) {
-    debug_pipe_start_timer(p->debug); //DEBUG
+    debug_pipe_start_timer(pipe_get_debug_pipe(p)); //DEBUG
     if (pipe_run(p, input) == 0)  {  //pipe finished
       *quit = 1;
       concurrent_pipe_stop(pp);
     }
-    debug_pipe_stop_timer(p->debug); //DEBUG
-    double pipe_time = debug_pipe_time(p->debug);  //DEBUG
-    printf("concurrent pipe %d ran in %fs\n", p->id, pipe_time);  //DEBUG
+    debug_pipe_stop_timer(pipe_get_debug_pipe(p)); //DEBUG
+    double pipe_time = debug_pipe_time(pipe_get_debug_pipe(p));  //DEBUG
+    printf("concurrent pipe %d ran in %fs\n", pipe_get_id(p), pipe_time);  //DEBUG
   }
   return NULL;
 }

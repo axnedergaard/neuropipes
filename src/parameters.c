@@ -38,8 +38,8 @@ int tokenise(char *spec, char **ptype, int *pparams_n, char ***pparams)  {
 
 char *get_parameter(pipe_* p, char *s)  {
   char *s_tok = NULL; 
-  for (int i = 0; i < p->params_n; i++)  {
-    s_tok = strdup(p->params[i]);
+  for (int i = 0; i < pipe_get_params_n(p); i++)  {
+    s_tok = strdup(pipe_get_params(p)[i]);
     if (strcmp(strtok(s_tok, "="), s) == 0)  {  //param matched
       return strdup(strtok(NULL, "="));
     }

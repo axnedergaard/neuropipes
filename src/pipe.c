@@ -4,11 +4,26 @@
 #include <string.h>
 #include "pipebuilder.h"
 
+struct pipe {
+  int id;
+  data *output;
+  int status;  // <-1:error -1:not init 0:not complete >0:complete
+  void *auxiliary; //auxiliary data structure, e.g. for emokit 
+  int(*init)(pipe_*, linkedlist*);
+  int(*run)(pipe_*, linkedlist*);
+  int(*kill)(pipe_*, linkedlist*);
+  int concurrent; 
+  int params_n;
+  char **params;
+  concurrent_pipe *concurrent_pipe;
+  debug_pipe *debug_pipe; 
+};
+
 pipe_* pipe_create()  {
   pipe_ *p = (pipe_*)malloc(sizeof(pipe_));
   if (p != NULL)  {
-    p->debug = debug_pipe_create();
-    if (p->debug == NULL)  {
+    p->debug_pipe = debug_pipe_create();
+    if (p->debug_pipe == NULL)  {
       free(p);
       fprintf(stderr, "pipe_create: failed to create debug\n");
       return NULL;
@@ -29,7 +44,7 @@ pipe_* pipe_create()  {
 
 int pipe_destroy(pipe_ *p)  {
   if (p != NULL)  {
-    debug_pipe_destroy(p->debug);
+    debug_pipe_destroy(p->debug_pipe);
     if (p->output != NULL)  data_destroy(p->output);
     if (p->auxiliary != NULL)  free(p->auxiliary);
     if (p->concurrent_pipe != NULL)  concurrent_pipe_destroy(p->concurrent_pipe);
@@ -37,22 +52,6 @@ int pipe_destroy(pipe_ *p)  {
     return 1;
   }
   return 0;
-}
-
-void pipe_set_id(pipe_* p, int id)  {
-  p->id = id;
-}
-
-int pipe_get_id(pipe_* p)  {
-  return p->id;
-}
-
-void pipe_set_concurrent(pipe_* p, int concurrent)  {
-  p->concurrent = concurrent;
-}
-
-int pipe_get_concurrent(pipe_* p)  {
-  return p->concurrent;
 }
 
 int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
@@ -72,7 +71,7 @@ int pipe_init(pipe_* p, linkedlist* l)  {  //linkedlist with input pipes
           if (l != NULL)  {
             while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {
               data *d = *data_ptr;
-              if (data_blocking(d))  {
+              if (data_get_blocking(d))  {
                 if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is bugged
                   printf("pipe_init: WARNING concurrent pipes reading blocking input is bugged\n");
                 }
@@ -105,7 +104,7 @@ int pipe_run(pipe_* p, linkedlist* l)  {  //linkedlist with input
       int status = p->run(p, l);
       if (status >= 0)  {
         p->status = 1; 
-        debug_pipe_increment_times_run(p->debug);  //DEBUG
+        debug_pipe_increment_times_run(p->debug_pipe);  //DEBUG
         return 1;
       }
       else  {
@@ -132,3 +131,96 @@ int pipe_kill(pipe_ *p, linkedlist *l)  {
   }
   return 0;
 }
+
+void pipe_set_id(pipe_* p, int id)  {
+  p->id = id;
+}
+
+int pipe_get_id(pipe_* p)  {
+  return p->id;
+}
+
+void pipe_set_output(pipe_ *p, data *d)  {
+  p->output = d;
+}
+
+data *pipe_get_output(pipe_ *p)  {
+  return p->output;
+}
+
+data **pipe_get_output_pointer(pipe_ *p)  {
+  return &p->output;
+}
+
+void pipe_set_status(pipe_* p, int status)  {
+  p->status = status;
+}
+
+int pipe_get_status(pipe_* p)  {
+  return p->status;
+}
+
+void pipe_set_auxiliary(pipe_* p, void *aux)  {
+  p->auxiliary = aux;
+}
+
+void *pipe_get_auxiliary(pipe_* p)  {
+  return p->auxiliary;
+}
+
+void pipe_set_init(pipe_* p, int(*init)(pipe_*, linkedlist*))  {
+  p->init = init;
+}
+int (*pipe_get_init(pipe_* p))(pipe_*, linkedlist*)  {
+  return p->init;
+}
+
+void pipe_set_run(pipe_* p, int(*run)(pipe_*, linkedlist*))  {
+  p->run = run;
+}
+
+int (*pipe_get_run(pipe_* p))(pipe_*, linkedlist*)  {
+  return p->run;
+}
+
+void pipe_set_kill(pipe_* p, int(*kill)(pipe_*, linkedlist*))  {
+  p->kill = kill;
+}
+
+int (*pipe_get_kill(pipe_* p))(pipe_*, linkedlist*)  {
+  return p->kill;
+}
+
+void pipe_set_concurrent(pipe_ *p, int concurrent)  {
+  p->concurrent = concurrent;
+}
+
+void pipe_set_params_n(pipe_ *p, int params_n)  {
+  p->params_n = params_n;
+}
+
+int pipe_get_params_n(pipe_ *p)  {
+  return p->params_n;
+}
+
+void pipe_set_params(pipe_ *p, char** params)  {
+  p->params = params;
+}
+
+char **pipe_get_params(pipe_ *p)  {
+  return p->params;
+}
+
+int pipe_get_concurrent(pipe_* p)  {
+  return p->concurrent;
+}
+
+concurrent_pipe *pipe_get_concurrent_pipe(pipe_* p)  {
+  return p->concurrent_pipe;
+}
+
+debug_pipe *pipe_get_debug_pipe(pipe_* p)  {
+  return p->debug_pipe;
+}
+
+

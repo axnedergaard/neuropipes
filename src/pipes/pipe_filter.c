@@ -23,8 +23,8 @@ int filter_init(pipe_* p, linkedlist* l)  {
   if (linkedlist_size(l) != 1)  {
     fprintf(stderr, "filter_init: pipe_ must have 1 input\n");
   }
-
-  p->output = data_create_from(input);
+  data *output = data_create_from(input);
+  pipe_set_output(p, output);
   
   //get parameters 
   char pass[] = "band";
@@ -79,44 +79,39 @@ int filter_init(pipe_* p, linkedlist* l)  {
     snprintf(spec, SPEC_MAX, "LpBu%d/%d", order, hc);
   }
 
-  int c = p->output->shape[0];
+  int c = data_get_shape(output)[0];
   double rate = 128; //param?
   fid_parse(rate, &spec, &aux->ff);  //TODO error check
   aux->run = fid_run_new(aux->ff, &aux->func);
-  aux->input = (double*)malloc(data_size(p->output));
-  aux->output = (double*)malloc(data_size(p->output));
+  aux->input = (double*)malloc(data_size(output));
+  aux->output = (double*)malloc(data_size(output));
   aux->buf = (void**)malloc(c*sizeof(void*));
   for (int i = 0; i < c; i++)  {
     aux->buf[i] = fid_run_newbuf(aux->run);
   }
 
-  p->auxiliary = aux;
+  pipe_set_auxiliary(p, aux);
  
   return 1;
 }
 
-int filter_run(pipe_* p, linkedlist* l)  {
-  data* input = *(data**)linkedlist_head(l);
+int filter_run(pipe_ *p, linkedlist *l)  {
+  data *input = *(data**)linkedlist_head(l);
   if (input == NULL)  {
     fprintf(stderr, "filter_run: must have 1 input\n");
     return 0;
   }
+  data *output = pipe_get_output(p);
 
-  struct filter_aux *aux = (struct filter_aux*)p->auxiliary;
+  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);;
 
   //copy from data
   data_copy_from_data(input, (void*)aux->input);
-/*
-  if (data_pass(input) == TYPE_COMPLEX)  {
-    data_copy_from_data(input, (void*)aux->input);
-  }
-  else if (data_pass(input) == TYPE_REAL)  { //?
-    data_copy_from_data_real_to_complex(input, (void*)aux->input);
-  }
-*/
+  
   //filter
-  int c = p->output->shape[0];
-  int n = p->output->shape[1];
+  int *shape = data_get_shape(output);
+  int c = shape[0];
+  int n = shape[1];
   for (int i = 0; i < c; i++)  {
     for (int j = 0; j < n; j++)  {
       aux->output[i*n + j] = aux->func(aux->buf[i], aux->input[i*n + j]);
@@ -124,7 +119,7 @@ int filter_run(pipe_* p, linkedlist* l)  {
   }
   
   //copy to memory
-  data_copy_to_data(p->output, (void*)aux->output); 
+  data_copy_to_data(output, (void*)aux->output); 
 
   return 1;
 }

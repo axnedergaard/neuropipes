@@ -103,6 +103,15 @@ void *linkedlist_head(linkedlist *l)  {
   return l->head->data;
 }
 
+void *linkedlist_pop(linkedlist *l)  {
+  linkedlist_node *head = l->head;
+  void *data = head->data;
+  l->head = head->next;
+  free(head);
+  l->size--;
+  return data;
+}
+
 void *linkedlist_tail(linkedlist *l)  {
   return l->tail->data;
 }

@@ -93,7 +93,6 @@ pipeline* pipeline_create()  {
   pl->interval = 0;
 
   piperegistry_init();
-  data_set_mtid();
 
   return pl;
 }
@@ -188,7 +187,8 @@ int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
   if (linkedlist_insert(pl->adjacency_list[u], (void*)(intptr_t)v) == 0)  {
     return 0;
   }
-  if (linkedlist_insert(pl->in_data[v], &pl->nodes[u]->output) == 0)  {
+  data **input = pipe_get_output_pointer(pl->nodes[u]);
+  if (linkedlist_insert(pl->in_data[v], input) == 0)  {
     return 0;
   }
   return 1;   
@@ -220,35 +220,32 @@ int pipeline_sort(pipeline* pl)  {
   //in-order sort: for every unused source node (in edges = 0), reduce in edge of each successor node by 1, and make the successor node a source node if it has no more in edges (Dijkstra)
   int added = 0;
   int in[pl->nodes_n];  //in edges
+  linkedlist *S = linkedlist_create();  //nodes with no more in edges
   for (int i = 0; i < pl->nodes_n; i++)  {  //set in edges
     in[i] = linkedlist_size(pl->in_data[i]);  //use in_data instead of adjacency list for less computations...
     if (in[i] == 0)  {
-      pl->sort[added++] = i;
+      linkedlist_insert(S, (void*)(intptr_t)i);
     }
   }
-  for (int i = 0; i < pl->nodes_n; i++)  {
-    if (added <= i)  {  //did not finish (added should always be greater than i)
-      fprintf(stderr, "pipeline_sort: was unable to order nodes, cycle exists or graph is not connected\n");
-      return 0;
-    } 
-    
-   int out_edge;
-   while ((out_edge = (int)(intptr_t)linkedlist_iterate(pl->adjacency_list[i])) != 0)  {
-     if (--in[out_edge] == 0)  {
-       pl->sort[added++] = out_edge;
-     }
+  while (linkedlist_size(S) != 0)  {
+    int s = (intptr_t)linkedlist_pop(S);  //node with no more in edges
+    pl->sort[added++] = s;
+    int out_edge = 0;
+    for (int i = 0; i < linkedlist_size(pl->adjacency_list[s]); i++)  {  //clumsy loop-iteration due to problems with linkedlist having int 0 entry
+      out_edge = (intptr_t)linkedlist_iterate(pl->adjacency_list[s]);
+      if (--in[out_edge] == 0)  {
+        linkedlist_insert(S, (void*)(intptr_t)out_edge);
+      }
     }
+  }
+  if (added < pl->nodes_n)  {
+    printf("pipeline_sort: warning - %d nodes not sorted, cycles exist or graph is not connected\n", pl->nodes_n - added);
   }
   //sort completed
   
-  //set remaining values as invalid
-  for (int i = added; i < pl->nodes_n; i++)  {
-    pl->sort[i] = -1;
-  }
-
   //separate into concurrent and non-concurrent
   pl->nc_sort = (int*)malloc(sizeof(int)*pl->nc_n);
-  pl->c_sort = (int*)malloc(sizeof(int)*(pl->nodes_n - pl->nc_n));
+  pl->c_sort = (int*)malloc(sizeof(int)*(added - pl->nc_n));
 
   int nc_added = 0;
   int c_added = 0;
@@ -291,7 +288,7 @@ int pipeline_run(pipeline* pl)  {
   //run concurrent pipes
   for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  { 
     pipe_ *p = pl->nodes[pl->c_sort[i]];
-    concurrent_pipe_start(p->concurrent_pipe, p, pl->in_data[pl->c_sort[i]], &quit);
+    concurrent_pipe_start(pipe_get_concurrent_pipe(p), p, pl->in_data[pl->c_sort[i]], &quit);
   }
 
   //run non-concurrent pipes
@@ -304,7 +301,7 @@ int pipeline_run(pipeline* pl)  {
     }
     double pipeline_time_before = get_clock_time();
     for (int i = 0; i < pl->nc_n; i++)  {
-      debug_pipe *debug = pl->nodes[pl->nc_sort[i]]->debug;
+      debug_pipe *debug = pipe_get_debug_pipe(pl->nodes[pl->nc_sort[i]]);
       debug_pipe_start_timer(debug);
       int status = pipe_run(pl->nodes[pl->nc_sort[i]], pl->in_data[pl->nc_sort[i]]);       
       if (status < 0)  {
@@ -339,18 +336,18 @@ int pipeline_run(pipeline* pl)  {
   //stop threads for concurrent pipes
   for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  {
     pipe_* p = pl->nodes[pl->c_sort[i]];
-    concurrent_pipe_stop(p->concurrent_pipe);  //send signal to stop thread
-    if (p->output != NULL)  {  //unblock data structures so threads don't wait indefinitely
-      data_unblock(p->output);
+    concurrent_pipe_stop(pipe_get_concurrent_pipe(p));  //send signal to stop thread
+    if (pipe_get_output(p) != NULL)  {  //unblock data structures so threads don't wait indefinitely
+      data_unblock(pipe_get_output(p));
     }
-    pthread_join(*(concurrent_pipe_thread(p->concurrent_pipe)), NULL); //wait for thread to stop 
+    pthread_join(*(concurrent_pipe_thread(pipe_get_concurrent_pipe(p))), NULL); //wait for thread to stop 
   }
 
   //kill pipes, print pipe averages run times
   for (int i = 0; i < pl->nodes_n; i++)  {
     pipe_* p = pl->nodes[pl->sort[i]];
-    double pipe_average_time = debug_pipe_average_time(p->debug);
-    fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(p->debug));
+    double pipe_average_time = debug_pipe_average_time(pipe_get_debug_pipe(p));
+    fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(pipe_get_debug_pipe(p)));
     pipe_kill(p, pl->in_data[pl->sort[i]]);  //TODO check for fail?
   }
 

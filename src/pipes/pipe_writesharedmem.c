@@ -20,14 +20,13 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "writesharedmem_init: writesharedmem pipe must have an input\n");
     return -1;
   }
-  p->output = NULL;  //writesharedmem pipe has no output 
 
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)malloc(sizeof(struct writesharedmem_aux));
 
   int shmid;
   key_t key = 6667;
-  int n = input->n; //number of dimensions
-  int data_len = input->len;
+  int n = data_get_n(input); //number of dimensions
+  int data_len = data_get_len(input);
   int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
   char *shm;
 
@@ -50,7 +49,8 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   aux->key = key;
   aux->shmid = shmid;
   aux->shm = shm;
-  p->auxiliary = aux;
+
+  pipe_set_auxiliary(p, aux);
 
   return 1;
 }
@@ -58,12 +58,12 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
 int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   data *input = *(data**)linkedlist_head(l);
 
-  struct writesharedmem_aux *aux = (struct writesharedmem_aux*)p->auxiliary;
+  struct writesharedmem_aux *aux = (struct writesharedmem_aux*)pipe_get_auxiliary(p);
 
-  int n = input->n;
-  int *shape = input->shape;
-  int *stride = input->stride;
-  int data_len = input->len;
+  int *shape, *stride;
+  int n = data_spec(input, &shape, &stride);
+  int data_len = data_get_len(input);
+  double *input_buffer = data_get_buffer(input);
 
   read_lock(input);
  
@@ -91,7 +91,7 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   }
   //data
   for (int i = 0; i < data_len; i++)  {
-    sprintf(buffer, "%f", (double)input->buffer[i]);
+    sprintf(buffer, "%f", (double)input_buffer[i]);
     for (int j = 0; j < DLEN; j++)  {
       *s++ = buffer[j];
     }
@@ -105,7 +105,7 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
 }
 
 int writesharedmem_kill(pipe_* p, linkedlist* l)  {
-  struct writesharedmem_aux *aux = (struct writesharedmem_aux*)p->auxiliary;
+  struct writesharedmem_aux *aux = (struct writesharedmem_aux*)pipe_get_auxiliary(p);
 
   shmdt(aux->shm);
   shmctl(aux->shmid, 0, NULL);

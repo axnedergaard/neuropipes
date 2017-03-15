@@ -21,37 +21,37 @@ static int pipe_teardown(void **state)  {
 
 static void pipe_test_concurrent(void **state)  {
   pipe_ *p = *state;
-  assert_int_equal(p->concurrent, 0);
+  assert_int_equal(pipe_get_concurrent(p), 0);
   
   pipe_ *cp = build_pipe("DUMMYEMOTIV", 1);
-  assert_int_equal(cp->concurrent, 1);
+  assert_int_equal(pipe_get_concurrent(cp), 1);
   pipe_destroy(cp);
 }
 
 static void pipe_test_init_run(void **state) {
   pipe_ *p = *state;
-  assert_int_equal(p->status, -1);
+  assert_int_equal(pipe_get_status(p), -1);
   int status = pipe_init(p, NULL);
   assert_int_equal(status, 1);  //init success
-  assert_int_equal(p->status, 0);  //status set to init
-  assert_non_null(p->output);  //data structure allocated
+  assert_int_equal(pipe_get_status(p), 0);  //status set to init
+  assert_non_null(pipe_get_output(p));  //data structure allocated
   pipe_run(p, NULL);
-  assert_int_equal(p->status, 1);  //run success
+  assert_int_equal(pipe_get_status(p), 1);  //run success
 }
 
 static void pipe_test_parameters(void **state)  {
   pipe_ *p = *state;
-  assert_int_equal(p->params_n, 0);
+  assert_int_equal(pipe_get_params_n(p), 0);
   
   pipe_ *p1 = build_pipe("DUMMYEMOTIV;var1=1", 0);
-  assert_int_equal(p1->params_n, 1);
-  assert_string_equal(p1->params[0], "var1=1");  
+  assert_int_equal(pipe_get_params_n(p1), 1);
+  assert_string_equal(pipe_get_params(p1)[0], "var1=1");  
   pipe_destroy(p1);
 
   pipe_ *p2 = build_pipe("DUMMYEMOTIV;var1=1,var2=2", 0);
-  assert_int_equal(p2->params_n, 2);   
-  assert_string_equal(p2->params[0], "var1=1");
-  assert_string_equal(p2->params[1], "var2=2");
+  assert_int_equal(pipe_get_params_n(p2), 2);   
+  assert_string_equal(pipe_get_params(p2)[0], "var1=1");
+  assert_string_equal(pipe_get_params(p2)[1], "var2=2");
   pipe_destroy(p2);
 }
 
@@ -128,10 +128,10 @@ static void data_test_create(void ** state)  {
 
   assert_non_null(d);
 
-  int n = data_len(d);
+  int n = data_get_len(d);
   int count = 0;
-  for (int i = 0; i < d->shape[0]; i++)  {
-    for (int j = 0; j < d->shape[1]; j++)  {
+  for (int i = 0; i < data_get_shape(d)[0]; i++)  {
+    for (int j = 0; j < data_get_shape(d)[1]; j++)  {
       count++;
     }
   }
@@ -143,13 +143,13 @@ static void data_test_create_from(void **state)  {
   
   data *d2 = data_create_from(d);
 
-  assert_int_equal(data_len(d), data_len(d2));
+  assert_int_equal(data_get_len(d), data_get_len(d2));
 
-  int n = d->n;
+  int n = data_get_n(d);
 
   for (int i = 0; i < n; i++)  {
-    assert_int_equal(d->shape[i], d2->shape[i]);
-    assert_int_equal(d->stride[i], d2->stride[i]);
+    assert_int_equal(data_get_shape(d)[i], data_get_shape(d2)[i]);
+    assert_int_equal(data_get_stride(d)[i], data_get_stride(d2)[i]);
   }
 
   data_destroy(d2);
@@ -158,23 +158,23 @@ static void data_test_create_from(void **state)  {
 static void data_test_blocking(void **state)  {
   data *d = *state;
  
-  assert_int_equal(data_blocking(d), 0);  
+  assert_int_equal(data_get_blocking(d), 0);  
 
   data_make_blocking(d);
   
-  assert_int_equal(data_blocking(d), 1);  
+  assert_int_equal(data_get_blocking(d), 1);  
 
-  assert_int_equal(d->kill, 0);   
+  assert_int_equal(data_get_kill(d), 0);   
 
   data_unblock(d);
 
-  assert_int_equal(d->kill, 1);  
+  assert_int_equal(data_get_kill(d), 1);  
 }
 
 static void data_test_copy(void **state)  {
   data *d = *state;
 
-  int n = data_len(d);
+  int n = data_get_len(d);
 
   double *input_buffer = (double*)malloc(sizeof(double)*n);
 
@@ -184,7 +184,7 @@ static void data_test_copy(void **state)  {
 
   data_copy_to_data(d, input_buffer);
 
-  assert_memory_equal(input_buffer, d->buffer, data_size(d));  //check internal representation
+  assert_memory_equal(input_buffer, data_get_buffer(d), data_size(d));  //check internal representation
 
   double *output_buffer = (double*)malloc(sizeof(double)*n);
 

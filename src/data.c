@@ -3,7 +3,23 @@
 #include <string.h>
 #include <stdio.h>
 
-static pthread_t mtid; //main thread id
+//len==shape[0]*...*shape[n] must hold
+//number of elements in dimension i is shape(i)/stride(i) where 1 <= stride(i) <= shape(i)
+struct data {
+  double *buffer;  //memory
+  int len; //length
+  int n; //number of dimensions
+  int *shape; //sizes of each dimensions
+  int *stride;  //strides of each dimension
+  int blocking;
+  pthread_mutex_t mutex;
+  pthread_cond_t cond_written;
+  pthread_cond_t cond_read;
+  int writes; 
+  int reads;
+  int readers;
+  int kill;
+};
 
 data* data_create(int n, int *shape, int *stride)  {
   data *d = (data*)malloc(sizeof(data));
@@ -40,77 +56,6 @@ data* data_create(int n, int *shape, int *stride)  {
   return d;
 }
 
-void data_set_mtid()  {
-  mtid = pthread_self();
-}
-
-int data_make_blocking(data *d)  {  //make data blocking
-  pthread_mutex_init(&d->mutex, NULL);  //TODO check init success
-  pthread_cond_init(&d->cond_read, NULL);
-  pthread_cond_init(&d->cond_written, NULL);
-  d->blocking = 1;
-  d->reads = 0;
-  d->readers = 0; 
-  d->writes = 0;
-  d->kill = 0;
-  return 1;
-}
-
-int data_blocking(data *d)  {
-  return d->blocking;
-}
-
-void data_increment_readers(data *d)  {
-  d->readers++;
-}
-
-int data_unblock(data *d)  {
-  pthread_mutex_lock(&d->mutex);
-  d->kill = 1;
-  pthread_cond_broadcast(&d->cond_written);
-  pthread_cond_broadcast(&d->cond_read);
-  pthread_mutex_unlock(&d->mutex);
-  return 1;
-}
-
-void read_lock(data *d)  {
-  if (d->blocking)  {
-    pthread_mutex_lock(&d->mutex); 
-    while ((d->kill != 1) && (d->writes == 0))  {
-      pthread_cond_wait(&d->cond_written, &d->mutex);
-    }
-  }
-}
-
-void write_lock(data *d)  {
-  if (d->blocking)  {
-    pthread_mutex_lock(&d->mutex);
-    while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
-      pthread_cond_wait(&d->cond_read, &d->mutex);
-    }
-  }
-}
-
-void write_unlock(data *d)  {
-  if (d->blocking)  {
-    d->reads = 0;
-    d->writes++;
-    pthread_cond_broadcast(&d->cond_written);
-    pthread_mutex_unlock(&d->mutex);
-  }
-}
-
-void read_unlock(data *d)  {
-  if (d->blocking)  {
-    d->reads++;
-    if (d->reads >= d->readers)  {
-      d->writes = 0;
-      pthread_cond_broadcast(&d->cond_read);
-    }
-    pthread_mutex_unlock(&d->mutex); 
-  }
-}
-
 data* data_create_from_string(char *str)  {
   if (strcmp(str, "SINGLE") == 0)  {
     return data_create(0, NULL, NULL);
@@ -133,27 +78,6 @@ int data_destroy(data *d)  {
   free(d);
   return 1;
 } 
-
-int data_size(data *d)  {  //returns size of buffer in memory TODO possible to use sizeof(buffer) instead?
-  return d->len*sizeof(double);
-}
-
-int data_len(data *d)  {
-  return d->len;
-}
-
-int data_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
-  if (d->stride[d->n-1] > 1)  {
-    return TYPE_COMPLEX;
-  }
-  else  {
-    return TYPE_REAL;
-  }
-}
-
-void data_broadcast_read(data *d)  {
-  pthread_cond_broadcast(&d->cond_read);
-}
 
 data *data_create_complex_from_real(data *input)  {
   data *output = NULL;
@@ -244,7 +168,7 @@ int data_copy_to_data(data *d, double *buf)  {
 
   for (int i = 0; i < len; i++)  {
     d->buffer[i] = buf[i];
-  //  printf("copied to %f\n", d->buffer[i]);
+ //   printf("%f ", d->buffer[i]);
   }
 
   write_unlock(d);
@@ -287,4 +211,123 @@ int data_write(data *d, FILE* f)  {
   read_unlock(d);
 
   return 1;
+}
+
+int data_make_blocking(data *d)  {  //make data blocking
+  pthread_mutex_init(&d->mutex, NULL);  //TODO check init success
+  pthread_cond_init(&d->cond_read, NULL);
+  pthread_cond_init(&d->cond_written, NULL);
+  d->blocking = 1;
+  d->reads = 0;
+  d->readers = 0; 
+  d->writes = 0;
+  d->kill = 0;
+  return 1;
+}
+
+void data_increment_readers(data *d)  {
+  d->readers++;
+}
+
+int data_unblock(data *d)  {
+  pthread_mutex_lock(&d->mutex);
+  d->kill = 1;
+  pthread_cond_broadcast(&d->cond_written);
+  pthread_cond_broadcast(&d->cond_read);
+  pthread_mutex_unlock(&d->mutex);
+  return 1;
+}
+
+void read_lock(data *d)  {
+  if (d->blocking)  {
+    pthread_mutex_lock(&d->mutex); 
+    while ((d->kill != 1) && (d->writes == 0))  {
+      pthread_cond_wait(&d->cond_written, &d->mutex);
+    }
+  }
+}
+
+void write_lock(data *d)  {
+  if (d->blocking)  {
+    pthread_mutex_lock(&d->mutex);
+    while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
+      pthread_cond_wait(&d->cond_read, &d->mutex);
+    }
+  }
+}
+
+void write_unlock(data *d)  {
+  if (d->blocking)  {
+    d->reads = 0;
+    d->writes++;
+    pthread_cond_broadcast(&d->cond_written);
+    pthread_mutex_unlock(&d->mutex);
+  }
+}
+
+void read_unlock(data *d)  {
+  if (d->blocking)  {
+    d->reads++;
+    if (d->reads >= d->readers)  {
+      d->writes = 0;
+      pthread_cond_broadcast(&d->cond_read);
+    }
+    pthread_mutex_unlock(&d->mutex); 
+  }
+}
+
+
+void data_broadcast_read(data *d)  {
+  pthread_cond_broadcast(&d->cond_read);
+}
+
+int data_size(data *d)  {  //returns size of buffer in memory TODO possible to use sizeof(buffer) instead?
+  return d->len*sizeof(double);
+}
+
+int data_type(data *d)  {  //complex if last dimension stride is larger than 1 (will be 2)
+  if (d->stride[d->n-1] > 1)  {
+    return TYPE_COMPLEX;
+  }
+  else  {
+    return TYPE_REAL;
+  }
+}
+
+int data_spec(data *d, int **shape, int **stride)  {  //return n and set shape, stride pointers
+  if (shape != NULL)  {
+    *shape = d->shape;
+  }
+  if (stride != NULL)  {
+    *stride = d->stride;
+  }
+  return d->n;
+}
+
+int data_get_len(data *d)  {
+  return d->len;
+}
+
+int data_get_n(data *d)  {
+  return d->n;
+}
+
+int *data_get_shape(data *d)  {
+  return d->shape;
+}
+
+int *data_get_stride(data *d)  {
+  return d->stride;
+}
+
+double *data_get_buffer(data *d)  {
+  return d->buffer;
+}
+
+int data_get_blocking(data *d)  {
+  return d->blocking;
+}
+
+int data_get_kill(data *d)  {  //testing purposes...
+  return d->kill;
 }
