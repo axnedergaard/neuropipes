@@ -1,4 +1,5 @@
 #include "../pipe.h"
+#include "../parameters.h"
 #include "../emokit.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +14,20 @@ struct auxiliary_emokit  {
 };
 
 int emotiv_init(pipe_* p, linkedlist* l)  {
-  data *output = data_create_from_string("EMOTIV"); 
+  int channels = 14;
+  int records = 16;
+  char *param_records = get_parameter(p, "records");
+  if (param_records != NULL)  {
+    records = atoi(param_records);
+    free(param_records);
+  }
+  int n = 2;
+  int shape[n], stride[n];
+  stride[0] = 1;
+  stride[1] = 1;
+  shape[0] = channels;
+  shape[1] = records;
+  data *output = data_create(n, shape, stride);
   pipe_set_output(p, output);
 
   struct auxiliary_emokit* aux = (struct auxiliary_emokit*)malloc(sizeof(struct auxiliary_emokit));
