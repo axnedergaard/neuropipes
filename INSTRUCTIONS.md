@@ -1,26 +1,28 @@
-# INSTALLATION INSTRUCTIONS (Arch Linux)
+# Installation
+Instructions for Arch Linux:
 ```
 sudo pacman -S hidapi fftw libmcrypt  
 git clone https://github.com/axnedergaard/neuropipes  
 cd neuropipes  
 make  
 ```
-Note: you will need cmocka (sudo pacman -S cmocka) if you want to run unit tests.
+Note: You will need cmocka (sudo pacman -S cmocka) if you want to run unit tests.
 
 
-# API
+# Usage
 Pipeline provides the callable interface of neuropipes through the functions declared in pipeline.h.  
 A pipeline instance is created with pipeline_create() and destroyed with pipeline_destroy().  
 
 There are 3 distinct phases to pipeline instance usage:
  
-1. Construction: Add pipes with pipeline_insert() and connect them with pipeline_insert_edge. Optionally set loop and interval variables with pipeline_set_loop() and pipeline_set_interval(). Loop specifies how many times the pipeline should run (0 indicates infinite loop), and interval many seconds each run should mimimally take.
-    a) pipeline_insert() takes as parameters the pipeline instance, the pipe specification (format: "TYPE;param1=value1,param2=value2") and a boolean indicating whether the pipe is concurrent (should run on a separate thread). Note that concurrent pipes connected to concurrent pipes are not supported. The function will return the id of the pipe.
+1. *Construction*: Add pipes with pipeline_insert() and connect them with pipeline_insert_edge. Optionally set loop and interval variables with pipeline_set_loop() and pipeline_set_interval(). Loop specifies how many times the pipeline should run (0 indicates infinite loop), and interval many seconds each run should mimimally take.  
+    a) pipeline_insert() takes as parameters the pipeline instance, the pipe specification (format: "TYPE;param1=value1,param2=value2") and a boolean indicating whether the pipe is concurrent (should run on a separate thread). Note that concurrent pipes connected to concurrent pipes are not supported. The function will return the id of the pipe.  
     b) pipeline_insert_edge() takes as parameters the pipeline instance, and the ids of two pipes to connect. The first pipe will provide input to the second pipe.
-2. Initialisation: Initialise the pipeline with pipeline_init()
-3. Running: Run the pipeline with pipeline_run()
+2. *Initialisation*: Initialise the pipeline with pipeline_init()
+3. *Running*: Run the pipeline with pipeline_run()
 
-### Example usage code (get concurrent input from Emotiv EEG device and write to shared memory location with key 9000 until interrupted):
+
+**Example usage code** (get concurrent input from Emotiv EEG device and write to shared memory location with key 9000 until interrupted):
 ```
 #include "pipeline.c"
 
@@ -42,7 +44,7 @@ int main()  {
 }
 ```
 
-### Implemented pipes types with (parameters):
+**Implemented pipes** with (parameters):
 
 - EMOTIV; Emotiv EEG input (14 channels).  
 - FOURIERTRANSFORM: Fast Fourier Transform (FFT).  
@@ -57,7 +59,7 @@ int main()  {
 - DUMMYCOMPUTATION (replace, replace_value): Pass input to output (do nothing), or change values to 'replace_value' (default 0) depending on boolean flag replace (default 0).  
 
 
-# How to write new pipes
+# Writing new pipes
 1. Write code for pipe
     a. Create a new C file src/pipes/pipe_NAME.c
   Add '#include "../pipe.h"' to beginning of file ('#include "../parameters.h"' if you want to parameterise your pipe)
@@ -65,15 +67,15 @@ int main()  {
         i) Functions must return 1 on success, <0 on failure and 0 to request pipeline termination.
         ii) Parameters: p is the calling pipe instance, l is a linkedlist with input data from pipes connected to this pipe.
         iii) (See 'Details for writing pipes' for more additional instructions)
-2. Register pipes in register_pipes.c:
+2. Register pipes in register_pipes.c
     a) Add function declarations 'NAME_init(pipe_* p, linkedlist *l) 'int NAME_run(pipe_ *p, linkedlist *l)' and 'int NAME_kill(pipe_* p, linkedlist *l)' under the other function declarations
     b) In the function definition register_pipes(), add the line 'piperegistry_register("NAME", &NAME_init, &NAME_run, &NAME_kill, "")' under the other function calls.
-3. Modify makefile and compile:
+3. Modify makefile and compile
     a) Add pipe_NAME.c at the end of the 'pipes=' line in makefile
     b) make
 4. You can now use your pipe with pipeline_insert(pl, "NAME")
 
-### Details for writing pipes: 
+**Notes on writing pipes**
  
 - init should allocate memory and perform pre-run operations (e.g. opening files and devices, calculations). If your pipe provides an output, you must create and store it during init, using 'data *d = data_create...();' (see 'Creating data structures') and store it using 'pipe_set_output(p, d);'  
 - run should contain code to be called while the pipeline is running, including copying from/to data structures  
