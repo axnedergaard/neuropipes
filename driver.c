@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pipeline.h"
+#include "src/pipeline.h"
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <pthread.h>

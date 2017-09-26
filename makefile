@@ -15,8 +15,8 @@ all : driver
 clean : 
 	rm -f driver tests/test
 
-driver :  $(maindir)driver.c $(maindeps) $(pipesdeps)
-	$(CC) -o driver $(maindir)driver.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
+driver :  driver.c $(maindeps) $(pipesdeps)
+	$(CC) -o driver driver.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
 
 test :	tests/test.c $(maindeps) $(pipedeps) 
 	$(CC) -o tests/test tests/test.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
