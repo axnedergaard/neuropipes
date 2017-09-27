@@ -1,4 +1,4 @@
-# neuropipes
+# Neuropipes
 An efficient and extensible real-time EEG signal processing framework written in C
 
 Dependencies: mcrypt, hidapi-libusb, fftw3, cmocka (for testing)
