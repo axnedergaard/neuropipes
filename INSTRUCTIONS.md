@@ -66,7 +66,7 @@ int main()  {
     3. Define the functions int 'NAME_init(pipe_* p, linkedlist *l)', 'int NAME_run(pipe_ *p, linkedlist *l)' and 'int NAME_kill(pipe_* p, linkedlist *l)'
         1. Functions must return 1 on success, <0 on failure and 0 to request pipeline termination.
         2. Parameters: p is the calling pipe instance, l is a linkedlist with input data from pipes connected to this pipe.
-        3. (See 'Details for writing pipes' for more additional instructions)
+        3. (See 'Notes on writing pipes' for more additional instructions)
 2. Register pipes in register_pipes.c
     1. Add function declarations 'NAME_init(pipe_* p, linkedlist *l) 'int NAME_run(pipe_ *p, linkedlist *l)' and 'int NAME_kill(pipe_* p, linkedlist *l)' under the other function declarations
     2. In the function definition register_pipes(), add the line 'piperegistry_register("NAME", &NAME_init, &NAME_run, &NAME_kill, "")' under the other function calls.
@@ -77,11 +77,11 @@ int main()  {
 
 **Notes on writing pipes**
  
-- init should allocate memory and perform pre-run operations (e.g. opening files and devices, calculations). If your pipe provides an output, you must create and store it during init, using 'data *d = data_create();' and store it using 'pipe_set_output(p, d);'  
+- init should allocate memory and perform pre-run operations (e.g. opening files and devices, calculations). If your pipe provides an output, you must create and store it during init, using 'data *d = data_create();' and store it using 'pipe_set_output();'  
 - run should contain code to be called while the pipeline is running, including copying from/to data structures  
 - kill should free memory and perform post-run operations (e.g. closing files and devices). You should not free memory for output data or auxiliary structures, but you should free memory allocated to attributes of an auxiliary structure.  
-- You may define an auxiliary struct to store additional variables and calculations. An instance of the struct s should be created and stored during init. Use 'pipe_set_auxiliary(p, s);' to store during init, and pipe_get_auxiliary(p) to retrieve during run and kill.  
-- data.h provides the following functions to create a data structure: data_create(), data_create_from(), data_create_real_from_complex(), data_create_complex_from_real  
+- You may define an auxiliary struct to store additional variables and calculations. An instance of the struct should be created and stored during init. Use 'pipe_set_auxiliary();' to store during init, and pipe_get_auxiliary() to retrieve during run and kill.  
+- data.h provides the following functions to create a data structure: data_create(), data_create_from(), data_create_real_from_complex(), data_create_complex_from_real()
 - data.h provides the following functions to copy to/from a data structure: data_copy_to(), data_copy_from()  
 - Data buffers can be accessed directly with data_get_buffer(). If you copy manually, you must explicitly lock and unlock the data structure using data_write_lock() and data_write_unlock(), or data_read_lock() and data_read_unlock()  
 - You can access input data with 'data \*input = \*(data**)linkedlist_head(l);' (use linkedlist_iterate(l) if pipe has multiple inputs, remember to call linked_reset_iterater(l) when done).  
