@@ -24,7 +24,7 @@ There are 3 distinct phases to pipeline instance usage:
 
 **Example usage code** (get concurrent input from Emotiv EEG device and write to shared memory location with key 9000 until interrupted):
 ```
-#include "pipeline.c"
+#include "src/pipeline.h"
 
 int main()  {
   pipeline *pl = pipeline_create();
@@ -68,7 +68,7 @@ int main()  {
         2. Parameters: p is the calling pipe instance, l is a linkedlist with input data from pipes connected to this pipe.
         3. (See 'Notes on writing pipes' for more additional instructions)
 2. Register pipes in register_pipes.c
-    1. Add function declarations 'NAME_init(pipe_* p, linkedlist *l) 'int NAME_run(pipe_ *p, linkedlist *l)' and 'int NAME_kill(pipe_* p, linkedlist *l)' under the other function declarations
+    1. Add function declarations 'NAME_init(pipe_* p, linkedlist *l)', 'int NAME_run(pipe_ *p, linkedlist *l)' and 'int NAME_kill(pipe_* p, linkedlist *l)' under the other function declarations
     2. In the function definition register_pipes(), add the line 'piperegistry_register("NAME", &NAME_init, &NAME_run, &NAME_kill, "")' under the other function calls.
 3. Modify makefile and compile
     1. Add pipe_NAME.c at the end of the 'pipes=' line in makefile
