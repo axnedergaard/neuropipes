@@ -1,6 +1,6 @@
 # Installation
 
-Instructions for Rasbian (thanks to [Andrew Stewart]{https://github.com/andrewxstewart})
+Instructions for Rasbian (thanks to [Andrew Stewart](https://github.com/andrewxstewart))
 ```
 sudo apt-get install libhidapi-dev uhash-dev libfftw3-dev libmcrypt-dev
 git clone https://github.com/axnedergaard/neuropipes  
