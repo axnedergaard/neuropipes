@@ -1,7 +1,7 @@
 # Neuropipes
 An efficient and extensible real-time EEG signal processing framework written in C
 
-Dependencies: mcrypt, hidapi-libusb, fftw3, cmocka (for testing)
+Dependencies: mcrypt, hidapi-libusb, fftw3, uthash, (cmocka for testing)
 
 Supported EEG systems: EMOTIV Epoc
 

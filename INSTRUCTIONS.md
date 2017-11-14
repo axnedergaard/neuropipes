@@ -1,13 +1,21 @@
 # Installation
+
+Instructions for Rasbian (thanks to [Andrew Stewart]{https://github.com/andrewxstewart})
+```
+sudo apt-get install libhidapi-dev uhash-dev libfftw3-dev libmcrypt-dev
+git clone https://github.com/axnedergaard/neuropipes  
+cd neuropipes  
+make  
+```
+
 Instructions for Arch Linux:
 ```
-sudo pacman -S hidapi fftw libmcrypt  
+sudo pacman -S hidapi fftw libmcrypt uthash 
 git clone https://github.com/axnedergaard/neuropipes  
 cd neuropipes  
 make  
 ```
 Note: You will need cmocka (sudo pacman -S cmocka) if you want to run unit tests.
-
 
 # Usage
 Pipeline provides the callable interface of neuropipes through the functions declared in pipeline.h.  
