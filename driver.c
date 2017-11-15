@@ -83,7 +83,7 @@ int main(int argc, char **argv)  {
 
   //RPI test
   int rpi = pipeline_insert(pl, "RPI", 0);
-  int print = pipeline_insert(pl, "PRINT", 0);
+  int print = pipeline_insert(pl, "WRITEFILE", 0);
   pipeline_insert_edge(pl, rpi, print);
 
  /* 

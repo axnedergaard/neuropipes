@@ -27,7 +27,7 @@ int rpi_init(pipe_* p, linkedlist* l)  {
   pipe_set_auxiliary(p, aux);
   
   //open UART filestream
-  int uart_fs = open("/dev/ttyS0", O_RDONLY | O_NDELAY | O_NOCTTY);
+  int uart_fs = open("/dev/ttyUSB0", O_RDONLY);
   if (uart_fs == -1)  {  //failed to open filestream
     fprintf(stderr, "rpi_init: failed to open UART filestream\n");
     return -1;
