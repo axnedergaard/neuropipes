@@ -1,13 +1,21 @@
 # Installation
+
+Instructions for Rasbian (thanks to [Andrew Stewart](https://github.com/andrewxstewart))
+```
+sudo apt-get install libhidapi-dev uhash-dev libfftw3-dev libmcrypt-dev
+git clone https://github.com/axnedergaard/neuropipes  
+cd neuropipes  
+make  
+```
+
 Instructions for Arch Linux:
 ```
-sudo pacman -S hidapi fftw libmcrypt  
+sudo pacman -S hidapi fftw libmcrypt uthash 
 git clone https://github.com/axnedergaard/neuropipes  
 cd neuropipes  
 make  
 ```
 Note: You will need cmocka (sudo pacman -S cmocka) if you want to run unit tests.
-
 
 # Usage
 Pipeline provides the callable interface of neuropipes through the functions declared in pipeline.h.  
@@ -46,7 +54,8 @@ int main()  {
 
 **Implemented pipes** with (parameters):
 
-- EMOTIV; Emotiv EEG input (14 channels).  
+- EMOTIV; Emotiv Epoc EEG input (14 channels).  
+- RPI; OpenEEG formatted (P2) Raspberry Pi serial port EEG input (6 channels).
 - FOURIERTRANSFORM: Fast Fourier Transform (FFT).  
 - INVERSEFOURIERTRANSFORM: Inverse FFT.  
 - FILTER (pass, order, lc, hc, rate, samplefreq): Perform Butterworth filter of order 'order' (default 2). The type of filter (bandpass, low-pass or high-pass) is specified by 'pass', options are 'band', 'low' and 'high' (default 'band'). Sampling rate is specified by 'rate' (default 128). Low-cutoff frequency is specified by 'lc' (default 8) and high-cutoff frequency by 'hc' (default 12). Sampling freqeuncy is specified by 'samplefreq' (default 128). Unparameterised, this specifies a second order alpha-wave bandpass filter.

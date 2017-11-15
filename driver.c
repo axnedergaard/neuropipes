@@ -68,7 +68,7 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, emotiv, writemem1);
   pipeline_insert_edge(pl, filt1, writemem2);
 */
-  
+/*  
   //functional power
   int input = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 0);
   int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
@@ -79,7 +79,12 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, input, shared1);
   pipeline_insert_edge(pl, fft, power);
   pipeline_insert_edge(pl, power, shared2);
+*/
 
+  //RPI test
+  int rpi = pipeline_insert(pl, "RPI", 0);
+  int print = pipeline_insert(pl, "WRITEFILE", 0);
+  pipeline_insert_edge(pl, rpi, print);
 
  /* 
   //performance simple
