@@ -54,7 +54,8 @@ int main()  {
 
 **Implemented pipes** with (parameters):
 
-- EMOTIV; Emotiv EEG input (14 channels).  
+- EMOTIV; Emotiv Epoc EEG input (14 channels).  
+- RPI; OpenEEG formatted (P2) Raspberry Pi serial port EEG input (6 channels).
 - FOURIERTRANSFORM: Fast Fourier Transform (FFT).  
 - INVERSEFOURIERTRANSFORM: Inverse FFT.  
 - FILTER (pass, order, lc, hc, rate, samplefreq): Perform Butterworth filter of order 'order' (default 2). The type of filter (bandpass, low-pass or high-pass) is specified by 'pass', options are 'band', 'low' and 'high' (default 'band'). Sampling rate is specified by 'rate' (default 128). Low-cutoff frequency is specified by 'lc' (default 8) and high-cutoff frequency by 'hc' (default 12). Sampling freqeuncy is specified by 'samplefreq' (default 128). Unparameterised, this specifies a second order alpha-wave bandpass filter.
