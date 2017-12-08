@@ -7,7 +7,7 @@ ext = emokit.c edflib.c fidlib.c
 maindeps = $(addprefix $(maindir), $(main))
 pipesdeps = $(addprefix $(pipesdir), $(pipes))
 extdeps = $(addprefix $(maindir), $(ext))
-lflags = -lhidapi-libusb -lmcrypt -lfftw3 -lcmocka -lm -lpthread -DT_LINUX
+lflags = -lhidapi-libusb -lmcrypt -lfftw3 -lm -lpthread -DT_LINUX
 cflags = -Wall -g -pg -std=gnu99
 
 all : driver
@@ -19,4 +19,4 @@ driver :  driver.c $(maindeps) $(pipesdeps)
 	$(CC) -o driver driver.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
 
 test :	tests/test.c $(maindeps) $(pipedeps) 
-	$(CC) -o tests/test tests/test.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
+	$(CC) -o tests/test tests/test.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) -lcmocka $(cflags)
