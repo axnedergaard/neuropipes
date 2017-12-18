@@ -18,8 +18,6 @@ data *data_create_real_from_complex(data*);
 data *data_create_from(data*);
 int data_destroy(data*);
 
-int data_copy_from_data_blocking(data*, double*);
-int data_copy_to_data_blocking(data*, double*);
 int data_copy_from_data(data*, double*);
 int data_copy_to_data(data*, double*);
 int data_copy_to_data_complex_to_real(data*, double*);

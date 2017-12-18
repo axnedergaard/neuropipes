@@ -26,7 +26,7 @@ void insert_next_concurrent(pipeline *pl, char *pipe)  {
 int main(int argc, char **argv)  {
   pipeline* pl = pipeline_create();
 
-  if (argc > 2)  {
+  if (argc > 2)  { 
     pipeline_set_interval(pl, atof(argv[2]));
   }
   if (argc > 1)  { 
@@ -35,7 +35,7 @@ int main(int argc, char **argv)  {
 
   //construct pipeline 
 
-  /* 
+  /*   
   //write file
   int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=0", 1);
   int writefile = pipeline_insert(pl, "WRITEFILE", 1);
@@ -81,21 +81,23 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, power, shared2);
 */
 
+  /*
   //RPI test
   int rpi = pipeline_insert(pl, "RPI", 0);
   int print = pipeline_insert(pl, "WRITEFILE", 0);
   pipeline_insert_edge(pl, rpi, print);
+*/
 
- /* 
+/*  
   //performance simple
-  int input = pipeline_insert(pl, "EMOTIV", 1);
+  int input = pipeline_insert(pl, "DUMMYEMOTIV", 0);
   int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   pipeline_insert_edge(pl, input, shared);
 */
 
-/* 
+ 
   //performance complex
-  int input = pipeline_insert(pl, "EMOTIV", 1);
+  int input = pipeline_insert(pl, "DUMMYEMOTIV", 0);
   int shared1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   int shared2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
   int shared3 = pipeline_insert(pl, "WRITESHAREDMEM;key=44", 0);
@@ -103,7 +105,7 @@ int main(int argc, char **argv)  {
   int shared5 = pipeline_insert(pl, "WRITESHAREDMEM;key=46", 0);
   int fft = pipeline_insert(pl, "FOURIERTRANSFORM", 0);
   int power = pipeline_insert(pl, "POWER", 0);
-  int file = pipeline_insert(pl, "WRITEFILE", 0); //filename?
+  int file = pipeline_insert(pl, "WRITEFILE;sf=8", 0); //filename?
   int print = pipeline_insert(pl, "PRINT", 0); //filename?
   int tbp = pipeline_insert(pl, "FILTER;pass=band,lc=4,hc=7", 0);
   int abp = pipeline_insert(pl, "FILTER;pass=band,lc=8,hc=12", 0);
@@ -120,7 +122,6 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, tbp, shared3);
   pipeline_insert_edge(pl, abp, shared4);
   pipeline_insert_edge(pl, bbp, shared5);
-*/
 
 /*
   //acceptance experiment (power)

@@ -25,53 +25,55 @@ int filter_init(pipe_* p, linkedlist* l)  {
   }
   data *output = data_create_from(input);
   pipe_set_output(p, output);
-  
+
   //get parameters 
-  char pass[] = "band";  //filter pass type
+  char pass[PARAM_MAX];  //filter pass type
+  strncpy(pass, "band", PARAM_MAX);
   int order = 2; //filter order
   int lc = 8;  //lower cutoff frequency
   int hc = 12;  //higher (upper) cutoff frequency
   int rate = 128; //sampling rate
-  char *pass_param = get_parameter(p, "pass"); 
-  if (pass_param != NULL)  {
-    if (strcmp(pass_param, "band") == 0)  {  
+  
+  char *param = get_parameter(p, "pass");  
+  if (param != NULL)  {
+    if (strcmp(param, "band") == 0)  {  
       strncpy(pass, "band", PARAM_MAX); 
     }
-    else if (strcmp(pass_param, "high") == 0)  {
+    else if (strcmp(param, "high") == 0)  {
       strncpy(pass, "high", PARAM_MAX);
     }
-    else if (strcmp(pass_param, "low") == 0)  {
+    else if (strcmp(param, "low") == 0)  {
       strncpy(pass, "low", PARAM_MAX);
     }
-  } 
-  free(pass_param);
-  char *lc_param = get_parameter(p, "lc");
-  if (lc_param != NULL)  {
-    lc = atoi(lc_param);
+    free(param);
+  }  
+  param = get_parameter(p, "lc");
+  if (param != NULL)  {
+    lc = atoi(param);
+    free(param);
   }
-  free(lc_param);
-  char *hc_param = get_parameter(p, "hc");
-  if (hc_param != NULL)  {
-    hc = atoi(hc_param);
+  param = get_parameter(p, "hc");
+  if (param != NULL)  {
+    hc = atoi(param);
+    free(param);
   }
-  free(hc_param);
-  char *order_param = get_parameter(p, "order");
-  if (order_param != NULL)  {
-    order = atoi(order_param);
+  param = get_parameter(p, "order");
+  if (param != NULL)  {
+    order = atoi(param);
+    free(param);
   }
-  free(order_param);
-  char *rate_param = get_parameter(p, "rate");
-  if (rate_param != NULL)  {
-    rate = atoi(order_param);
+  param = get_parameter(p, "rate");
+  if (param != NULL)  {
+    rate = atoi(param);
+    free(param);
   }
-  free(rate_param);
- 
+
   struct filter_aux *aux = (struct filter_aux*)malloc(sizeof(struct filter_aux));  
   if (aux == NULL)  {
     fprintf(stderr, "filter_init: failed to alloc mem for aux\n");
     return 0;
   }
-
+  
   //set spec
   char *spec = (char*)malloc(sizeof(char)*SPEC_MAX);
   if (strcmp(pass, "band") == 0)  {
@@ -83,25 +85,25 @@ int filter_init(pipe_* p, linkedlist* l)  {
   else if (strcmp(pass, "low") == 0)  {
     snprintf(spec, SPEC_MAX, "LpBu%d/%d", order, hc);
   }
-
+ 
   //create filter
   char *error = fid_parse(rate, &spec, &aux->ff);
   if (error != NULL)  {
     fprintf(stderr, "pipe_filter_init: fidlib parse error %s\n", error);
   }
-  free(spec);
 
   int c = data_get_shape(output)[0];  //number of channels
-  for (int i = 0; i < c; i++)  {
-    aux->buf[i] = fid_run_newbuf(aux->run);
-  }
   aux->run = fid_run_new(aux->ff, &aux->func);
   aux->input = (double*)malloc(data_size(output));
   aux->output = (double*)malloc(data_size(output));
   aux->buf = (void**)malloc(c*sizeof(void*));
 
+  for (int i = 0; i < c; i++)  {
+    aux->buf[i] = fid_run_newbuf(aux->run);
+  }
+
   pipe_set_auxiliary(p, aux);
- 
+
   return 1;
 }
 

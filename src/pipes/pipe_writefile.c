@@ -1,9 +1,11 @@
 #include "../pipe.h"
 #include "../data.h"
 #include "../edflib.h"
+#include "../parameters.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct writefile_aux {
   int handle;
@@ -16,28 +18,40 @@ int writefile_init(pipe_ *p, linkedlist *l)  {
   }
   struct writefile_aux *aux = (struct writefile_aux*)malloc(sizeof(struct writefile_aux)); 
 
-  char *fn = "recording.edf";
-  //get file name from param
+  char fn[PARAM_MAX]; //file name
+  strncpy(fn, "save.edf", PARAM_MAX); 
+  int sf = 128; //sample frequency
 
-  //get sample frequency param? TODO
+  char *param = get_parameter(p, "fn");
+  if (param != NULL)  {
+    strncpy(fn, param, PARAM_MAX);
+    free(param);
+  }
+  param = get_parameter(p, "sf");
+  if (param != NULL)  {
+    sf = atoi(param);
+    free(param);
+  }
 
   //open edf file for writing
   int *shape = data_get_shape(input);
   int c = shape[0];
-  int n = shape[1];
   int handle = edfopen_file_writeonly(fn, EDFLIB_FILETYPE_EDFPLUS, c);
+  if (handle < 0)  {
+    printf("writefile_init: error opening file\n");
+  }
+  
   for (int i = 0; i < c; i++)  {  //TODO params
-   if (edf_set_samplefrequency(handle, i, n) != 0)  printf("failed to set sample frequency\n");
-    if (edf_set_physical_maximum(handle, i, 10000) != 0)  printf("failed to set max phy\n");
-    if (edf_set_physical_minimum(handle, i, 0) != 0)  printf("failed to set min phy\n");
+    if (edf_set_samplefrequency(handle, i, sf) != 0)  printf("failed to set sample frequency\n");
     if (edf_set_digital_maximum(handle, i, 32767) != 0)  printf("failed to max dig\n");
-    if (edf_set_digital_minimum(handle, i, 0) != 0)  printf("failed to set min dig\n");
+    if (edf_set_digital_minimum(handle, i, -32767) != 0)  printf("failed to set min dig\n");
+    if (edf_set_physical_maximum(handle, i, 32767) != 0)  printf("failed to set max phy\n");
+    if (edf_set_physical_minimum(handle, i, -32767) != 0)  printf("failed to set min phy\n");
   }
 
   aux->handle = handle;
 
   pipe_set_auxiliary(p, aux);
-
   return 1;
 }
 
