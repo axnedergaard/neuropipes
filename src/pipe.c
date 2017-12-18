@@ -16,18 +16,18 @@ struct pipe {
   int params_n;
   char **params;
   concurrent_pipe *concurrent_pipe;
-  debug_pipe *debug_pipe; 
+  //debug_pipe *debug_pipe; 
 };
 
 pipe_* pipe_create()  {
   pipe_ *p = (pipe_*)malloc(sizeof(pipe_));
   if (p != NULL)  {
-    p->debug_pipe = debug_pipe_create();
-    if (p->debug_pipe == NULL)  {
-      free(p);
-      fprintf(stderr, "pipe_create: failed to create debug\n");
-      return NULL;
-    }
+    //p->debug_pipe = debug_pipe_create();
+    //if (p->debug_pipe == NULL)  {
+    //  free(p);
+    //  fprintf(stderr, "pipe_create: failed to create debug\n");
+    //  return NULL;
+    //}
     p->run = NULL;
     p->init = NULL;
     p->kill = NULL;
@@ -44,7 +44,7 @@ pipe_* pipe_create()  {
 
 int pipe_destroy(pipe_ *p)  {
   if (p != NULL)  {
-    debug_pipe_destroy(p->debug_pipe);
+    //debug_pipe_destroy(p->debug_pipe);
     if (p->output != NULL)  data_destroy(p->output);
     if (p->auxiliary != NULL)  free(p->auxiliary);
     if (p->concurrent_pipe != NULL)  concurrent_pipe_destroy(p->concurrent_pipe);
@@ -55,6 +55,7 @@ int pipe_destroy(pipe_ *p)  {
 }
 
 int pipe_init(pipe_* p, linkedlist* l)  {
+  //printf("initialising pipe %p\n", p);
   if (p != NULL)  {
     if (p->init != NULL)  {
         if (p->init(p, l) == 1)  {  //init success
@@ -97,33 +98,21 @@ int pipe_init(pipe_* p, linkedlist* l)  {
 }
 
 int pipe_run(pipe_* p, linkedlist* l)  {
-  if (p != NULL)  {
-    if (p->run != NULL)  {
-      if (p->status == -1)  {  //pipe not initialised
-        fprintf(stderr, "pipe_run: pipe %p has not been been init\n", p);
-        return 0;
-      }
-      int status = p->run(p, l);  //run
-      if (status >= 0)  {  //run success
-        p->status = 1; 
-        debug_pipe_increment_times_run(p->debug_pipe);  //DEBUG
-        return 1;
-      }
-      else  {  //run failure
-        fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
-        p->status = -2;
-        return 0;
-      }
-    }
-    else  {
-      fprintf(stderr, "pipe_run: pipe has no call\n");
-      return 0;
-    }
+  //printf("running pipe %p\n", p);
+  int status = p->run(p, l);  //run
+  if (status >= 0)  {  //run success
+    p->status = 1; 
+    return 1;
+  }
+  else  {  //run failure
+    fprintf(stderr, "pipe_run: pipe %p failed to run\n", p);
+    p->status = -2;
   }
   return 0;
 }
 
 int pipe_kill(pipe_ *p, linkedlist *l)  {
+  //printf("killing pipe %p\n", p);
   if (p != NULL)  {
     if (p->kill != NULL)  {
       if (p->kill(p, l) != 1)  {
@@ -220,9 +209,9 @@ int pipe_get_concurrent(pipe_* p)  {
 concurrent_pipe *pipe_get_concurrent_pipe(pipe_* p)  {
   return p->concurrent_pipe;
 }
-
+/*
 debug_pipe *pipe_get_debug_pipe(pipe_* p)  {
   return p->debug_pipe;
-}
+}*/
 
 

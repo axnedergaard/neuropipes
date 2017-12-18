@@ -23,7 +23,9 @@ pipe_* build_pipe(char *spec, int concurrent)  {
   pipe_set_concurrent(p, concurrent);
   pipe_set_params_n(p, params_n);
   pipe_set_params(p, params);
-  
+
+//  printf("built pipe %p with spec %s\n", p, spec);
+
   return p;
 }
 
