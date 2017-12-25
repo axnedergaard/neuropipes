@@ -1,22 +1,40 @@
 CC = gcc
 maindir = src/
 pipesdir = src/pipes/
-main = concurrent_pipe.c gettime.c debug_pipe.c hashtable.c linkedlist.c data.c pipe.c parameters.c register_pipes.c pipebuilder.c piperegistry.c pipeline.c
-pipes = pipe_power.c pipe_dummy_computation.c pipe_writesharedmem.c pipe_inversefouriertransform.c pipe_dummyemotiv.c pipe_filter.c pipe_fouriertransform.c pipe_print.c pipe_emotiv.c pipe_writefile.c pipe_readfile.c pipe_rpi.c
-ext = emokit.c edflib.c fidlib.c
-maindeps = $(addprefix $(maindir), $(main))
-pipesdeps = $(addprefix $(pipesdir), $(pipes))
-extdeps = $(addprefix $(maindir), $(ext))
-lflags = -lhidapi-libusb -lmcrypt -lfftw3 -lm -lpthread -DT_LINUX -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE
-cflags = -Wall -g -pg -std=gnu99 
+main = concurrent_pipe gettime debug_pipe hashtable linkedlist data pipe parameters register_pipes pipebuilder piperegistry pipeline
+pipes = pipe_power pipe_dummy_computation pipe_writesharedmem pipe_inversefouriertransform pipe_dummyemotiv pipe_filter pipe_fouriertransform pipe_print pipe_emotiv pipe_writefile pipe_readfile pipe_rpi
+ext = emokit edflib fidlib
+mainf = $(addprefix $(maindir), $(main))
+pipesf = $(addprefix $(pipesdir), $(pipes))
+extf = $(addprefix $(maindir), $(ext))
+lflags = -lhidapi-libusb -lmcrypt -lfftw3 -lm -lpthread
+cflags = -Wall -std=gnu99 -DT_LINUX -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE 
 
-all : driver
+all : compile 
+	
+compile : $(addsuffix .c, $(mainf) $(pipesf) $(extf))
+	$(CC) -fPIC $(cflags) -c $(addsuffix .c, $(extf) $(pipesf) $(mainf)) 
+	$(CC) -shared $(lflags) -Wl,-soname,libneuropipes.so.1 -o libneuropipes.so.1.0 $(addsuffix .o, $(ext) $(pipes) $(main)) 
+	rm *.o
+
+install :
+	ln -sf libneuropipes.so.1.0 libneuropipes.so.1
+	ln -sf libneuropipes.so.1.0 libneuropipes.so
+	mv libneuropipes.so* /usr/lib
+	cp src/neuropipes.h /usr/include
+
+uninstall :
+	rm /usr/lib/libneuropipes.so*
+	rm /usr/include/neuropipes.h
 
 clean : 
-	rm -f driver tests/test
+	rm -f driver cli tests/test libneuropipes.so* *.o
 
-driver :  driver.c $(maindeps) $(pipesdeps)
-	$(CC) -o driver driver.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) $(cflags)
+cli : cli.c
+	$(CC) cli.c -o cli -lneuropipes
 
-test :	tests/test.c $(maindeps) $(pipedeps) 
-	$(CC) -o tests/test tests/test.c $(maindeps) $(pipesdeps) $(extdeps) $(lflags) -lcmocka $(cflags)
+driver : driver.c
+	$(CC) driver.c -o driver -lneuropipes
+
+test :	tests/test.c $(addsuffix .c, $(extf) $(pipesf) $(mainf))
+	$(CC) -o tests/test tests/test.c $(addsuffix .c, $(extf) $(pipesf) $(mainf)) $(lflags) -lcmocka $(cflags)

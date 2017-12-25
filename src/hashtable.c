@@ -60,8 +60,7 @@ void* hashtable_lookup(hashtable *ht, char *key)  {
   }
 }
 
-int hashtable_size(hashtable* ht)  {
+int hashtable_size(hashtable *ht)  {
   //?
   return -1;
 }
-

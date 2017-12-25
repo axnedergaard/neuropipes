@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "src/pipeline.h"
+#include "pipeline.h"
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <pthread.h>
@@ -57,10 +57,9 @@ int main(int argc, char **argv)  {
   pipeline_insert_edge(pl, input, computation);
 //  pipeline_insert_edge(pl, computation, output);
 */
-
 /*
   //functional filter
-  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1", 1);
+  int emotiv = pipeline_insert(pl, "DUMMYEMOTIV;random=1,records=254", 0);
   int filt1 = pipeline_insert(pl, "FILTER;order=4,pass=band,lc=8,hc=12", 0);
   int writemem1 = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   int writemem2 = pipeline_insert(pl, "WRITESHAREDMEM;key=43", 0);
@@ -87,14 +86,12 @@ int main(int argc, char **argv)  {
   int print = pipeline_insert(pl, "WRITEFILE", 0);
   pipeline_insert_edge(pl, rpi, print);
 */
-
-/*  
+/* 
   //performance simple
   int input = pipeline_insert(pl, "DUMMYEMOTIV", 0);
   int shared = pipeline_insert(pl, "WRITESHAREDMEM;key=42", 0);
   pipeline_insert_edge(pl, input, shared);
 */
-
  
   //performance complex
   int input = pipeline_insert(pl, "DUMMYEMOTIV", 0);

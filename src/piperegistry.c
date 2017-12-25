@@ -6,15 +6,21 @@
 #include <stdio.h>
 #include "register_pipes.h"
 
-hashtable* ht;
+hashtable *ht;
+linkedlist *keys;  //TODO more elegant solution using uthash?
 
 int piperegistry_init()  {  //???
   ht = hashtable_create();
   if (ht == NULL)  {
     return 0;
   }
+  keys = linkedlist_create();
+  if (keys == NULL)  {
+    return 0;
+  }
 
   register_pipes();
+  
 
   return 1;
 } 
@@ -30,12 +36,15 @@ int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)
   pd->kill = kill;
   pd->valid_inputs = (char*)malloc(sizeof(char)*strlen(valid_inputs));
   strncpy(pd->valid_inputs, valid_inputs, strlen(valid_inputs));
-  if (hashtable_insert(ht,name, (void*)pd) == 0)  {  //name already in table
+  if (hashtable_insert(ht, name, (void*)pd) == 0)  {  //name already in table
     free(pd->valid_inputs);
     free(pd);
     fprintf(stderr, "register pipe: failed to register pipe %s\n", name);
     return 0;
   }
+
+  linkedlist_insert(keys, (void*)name);
+
   return 1;
 }
 
@@ -48,14 +57,26 @@ int piperegistry_deregister(char* name)  {
   hashtable_remove(ht, name);
   free(pd->valid_inputs); //?
   free(pd);
+
+  linkedlist_remove(keys, (void*)name);
+
   return 1;
 }
 
-//return list of valid input data (char*) 
+//return list of valid input data (char*) TODO
 linkedlist* piperegistry_get_valid_inputs(char *name)  {
   return NULL;
 }
 
 hashtable *piperegistry_ht()  {
   return ht;
+}
+
+int list_available_pipes(char*** list)  {  //TODO warning: requires piperegistry_init to have been called
+  int n = linkedlist_size(keys);
+  *list = (char**)malloc(sizeof(char*)*n);
+  for (int i = 0; i < n; i++)  {
+    (*list)[i] = linkedlist_iterate(keys);
+  }
+  return n;
 }

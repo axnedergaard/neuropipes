@@ -13,7 +13,6 @@
 
 #define INITIAL_MAX 8
 
-static int next_id = 0;
 static int quit = 0;
 
 void sig_handler(int signo)  {
@@ -34,6 +33,7 @@ struct pipeline {  //graph
   linkedlist **in_data; //in data for every node
   int loop;
   double interval;
+  int next_id;
 };
 
 pipeline* pipeline_create()  {
@@ -43,6 +43,9 @@ pipeline* pipeline_create()  {
     return NULL;
   }
 
+  quit = 0;
+ 
+  pl->next_id = 0;
   pl->nodes_max = INITIAL_MAX;
   pl->nodes_n = 0;
   pl->nc_n = 0;
@@ -128,6 +131,23 @@ int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destr
   return 0;
 }
 
+int *pipeline_adjacency_matrix(pipeline *pl)  {
+  int matrix_size = pl->nodes_n*pl->nodes_n;
+  int *adjacency_matrix = (int*)malloc(sizeof(int)*matrix_size);
+  for (int i = 0; i < matrix_size; i++)  {
+    adjacency_matrix[i] = 0;
+  }
+  for (int i = 0; i < pl->nodes_n; i++)  {
+    int adjacency_list_n = linkedlist_size(pl->adjacency_list[i]);
+    for (int j = 0; j < adjacency_list_n; j++)  {  //necessary to distinguish index 0 and end of iterater
+      int index = (intptr_t)linkedlist_iterate(pl->adjacency_list[i]);
+      adjacency_matrix[i*pl->nodes_n + index] = 1;
+    }
+    linkedlist_reset_iterater(pl->adjacency_list[i]);
+  }
+  return adjacency_matrix;
+}
+
 int pipeline_size(pipeline *pl)  {
   return pl->nodes_n;
 }
@@ -184,6 +204,11 @@ int pipeline_expand(pipeline *pl)  {
 }
 
 int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
+  if ((u < 0) || (u > (pl->nodes_n-1)) || (v < 0) || (v > (pl->nodes_n-1)))  {
+    fprintf(stderr, "pipeline_insert_edge: pipe index out of bounds\n");
+    return 0;
+  }
+
   if (linkedlist_insert(pl->adjacency_list[u], (void*)(intptr_t)v) == 0)  {
     return 0;
   }
@@ -197,7 +222,12 @@ int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
 int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
   pipe_* p = build_pipe(spec, concurrent);
 
-  pipe_set_id(p, next_id++);
+  if (p == NULL)  {
+    fprintf(stderr, "pipeline_insert: failed to create pipe\n");
+    return -1;
+  }
+
+  pipe_set_id(p, pl->next_id++);
 
   if (pl->nodes_n >= pl->nodes_max)  {  
     pipeline_expand(pl);
@@ -262,21 +292,6 @@ int pipeline_sort(pipeline* pl)  {
   return 1;
 }
 
-int pipeline_init(pipeline* pl)  {
-//  printf("initing: n=%d\n", pl->nodes_n);
-  pipeline_sort(pl);
-  //pipes are now sorted 
-  for (int i = 0; i < pl->nodes_n; i++)  {
-  //  printf("initing pipe_ %p\n", pl->nodes[pl->sort[i]]);
-    linkedlist* in_data = pl->in_data[pl->sort[i]];
-    if (pipe_init(pl->nodes[pl->sort[i]], in_data) != 1)  {
-      fprintf(stderr, "pipeline_init: failed to init pipe %d\n", pl->sort[i]); 
-      return 0;
-    }
-  } 
-  return 1;
-}
-
 int pipeline_run(pipeline* pl)  {
   if (pipeline_size(pl) <= 0)  {  //remove???
     fprintf(stderr, "no pipes to run\n");
@@ -317,18 +332,18 @@ int pipeline_run(pipeline* pl)  {
       //printf("pipe %d ran in %fs\n", pl->nc_sort[i], pipe_time);
     }
     
-    /* 
-    double pipeline_time = get_clock_time() - pipeline_time_before;
-    printf("pipeline ran in %fs\n", pipeline_time);
-    double lag = pl->interval - pipeline_time;
-    if ((pl->loop != 1) && (lag > 0))  {
-      printf("sleeping for %fs\n\n", lag);
-      usleep((int)(lag*1000000));
-    }
-    else  {
-      printf("\n");
-    }
-    */
+     
+    //double pipeline_time = get_clock_time() - pipeline_time_before;
+    //printf("pipeline ran in %fs\n", pipeline_time);
+    //double lag = pl->interval - pipeline_time;
+    //if ((pl->loop != 1) && (lag > 0))  {
+    //  printf("sleeping for %fs\n", lag);
+    //  usleep((int)(lag*1000000));
+    //}
+    //else  {
+    //  printf("\n");
+    //}
+    
 
     if (pl->loop != 0)  {
       pl->loop--;
@@ -357,5 +372,20 @@ int pipeline_run(pipeline* pl)  {
   //double total_time = get_clock_time() - total_time_before;
   //fprintf(stdout, "total run time: %fs\n", total_time);
 
+  return 1;
+}
+
+int pipeline_init(pipeline *pl)  {
+//  printf("initing: n=%d\n", pl->nodes_n);
+  pipeline_sort(pl);
+  //pipes are now sorted 
+  for (int i = 0; i < pl->nodes_n; i++)  {
+  //  printf("initing pipe_ %p\n", pl->nodes[pl->sort[i]]);
+    linkedlist* in_data = pl->in_data[pl->sort[i]];
+    if (pipe_init(pl->nodes[pl->sort[i]], in_data) != 1)  {
+      fprintf(stderr, "pipeline_init: failed to init pipe %d\n", pl->sort[i]); 
+      return 0;
+    }
+  } 
   return 1;
 }
