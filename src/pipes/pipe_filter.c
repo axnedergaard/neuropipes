@@ -7,7 +7,7 @@
 
 //Butterworth filter using fidlib
 
-#define SPEC_MAX 32  //max length of fidlib pipe specification
+#define SPEC_MAX 128  //max length of fidlib pipe specification
 
 struct filter_aux {
   FidFilter *ff;
@@ -34,12 +34,12 @@ int filter_init(pipe_* p, linkedlist* l)  {
   int order = 2; //filter order
   int lc = 8;  //lower cutoff frequency
   int hc = 12;  //higher (upper) cutoff frequency
-  int rate = 128; //sampling rate
+  int sf = 128; //sampling frquency
   set_parameter_string(p, "pass", pass);
   set_parameter_int(p, "order", &order);
   set_parameter_int(p, "lc", &lc);
   set_parameter_int(p, "hc", &hc);
-  set_parameter_int(p, "rate", &rate);
+  set_parameter_int(p, "sf", &sf);
   
   //set spec
   char *spec = (char*)malloc(sizeof(char)*SPEC_MAX);
@@ -54,7 +54,7 @@ int filter_init(pipe_* p, linkedlist* l)  {
   }
  
   //create filter
-  char *error = fid_parse(rate, &spec, &aux->ff);
+  char *error = fid_parse(sf, &spec, &aux->ff);
   if (error != NULL)  {
     fprintf(stderr, "pipe_filter_init: fidlib parse error %s\n", error);
   }
