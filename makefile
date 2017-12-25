@@ -14,18 +14,18 @@ all : compile
 	
 compile : $(addsuffix .c, $(mainf) $(pipesf) $(extf))
 	$(CC) -fPIC $(cflags) -c $(addsuffix .c, $(extf) $(pipesf) $(mainf)) 
-	$(CC) -shared $(lflags) -Wl,-soname,libneuropipes.so.1 -o libneuropipes.so.1.0 $(addsuffix .o, $(ext) $(pipes) $(main)) 
+	$(CC) -shared $(lflags) -Wl,-soname,libneuropipes.so -o libneuropipes.so.1.0 $(addsuffix .o, $(ext) $(pipes) $(main)) 
 	rm *.o
 
-install :
-	ln -sf libneuropipes.so.1.0 libneuropipes.so.1
-	ln -sf libneuropipes.so.1.0 libneuropipes.so
-	mv libneuropipes.so* /usr/lib
+install : libneuropipes.so.1.0
 	cp src/neuropipes.h /usr/include
+	cp libneuropipes.so.1.0 /usr/lib
+	ldconfig -n /usr/lib
+	rm libneuropipes.so.1.0
 
 uninstall :
-	rm /usr/lib/libneuropipes.so*
 	rm /usr/include/neuropipes.h
+	rm /usr/lib/libneuropipes.so*
 
 clean : 
 	rm -f driver cli tests/test libneuropipes.so* *.o

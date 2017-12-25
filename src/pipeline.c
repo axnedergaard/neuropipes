@@ -243,11 +243,11 @@ int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
     pl->nc_n++;
   }
 
-  return pipe_get_id(p);  //return pipe_ id
+  return pipe_get_id(p);  //return pipe id
 }
 
 int pipeline_sort(pipeline* pl)  { 
-  //in-order sort: for every unused source node (in edges = 0), reduce in edge of each successor node by 1, and make the successor node a source node if it has no more in edges (Dijkstra)
+  //in-order sort: for every unused source node (in edges = 0), reduce in edge of each successor node by 1, and make the successor node a source node if it has no more in edges
   int added = 0;
   int in[pl->nodes_n];  //in edges
   linkedlist *S = linkedlist_create();  //nodes with no more in edges
