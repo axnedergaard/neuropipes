@@ -17,6 +17,8 @@
 //	portable (unlike the JIT option).
 //
 
+typedef unsigned char uchar;
+
 typedef struct Run {
    int magic;		// Magic: 0x64966325
    int buf_size;	// Length of working buffer required in doubles	
@@ -30,7 +32,6 @@ typedef struct RunBuf {
    int mov_cnt;		// Number of bytes to memmove
    double buf[0];
 } RunBuf;
-
 
 //
 //	Filter processing routine.  This is designed to avoid too many
@@ -71,12 +72,10 @@ typedef struct RunBuf {
 //	commands, plus a 13 command.
 //
 
-typedef unsigned char uchar;
-
 static double 
 filter_step(void *fbuf, double iir) {
    double *coef= ((RunBuf*)fbuf)->coef;
-   uchar *cmd= ((RunBuf*)fbuf)->cmd;
+   uchar *cmd= (uchar*)((RunBuf*)fbuf)->cmd;
    double *buf= &((RunBuf*)fbuf)->buf[0];
    uchar ch;
    double fir= 0;
@@ -228,7 +227,7 @@ fid_run_new(FidFilter *filt, double (**funcpp)(void *,double)) {
 
    // Allocate worst-case sizes for temporary arrays
    coef_tmp= ALLOC_ARR(coef_max= filt_cnt + 1, double);
-   cmd_tmp= ALLOC_ARR(cmd_max= filt_cnt + 4, char);
+   cmd_tmp= ALLOC_ARR(cmd_max= filt_cnt + 4, uchar);
    dp= coef_tmp;
    cp= cmd_tmp;
    prev= 0;

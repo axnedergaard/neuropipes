@@ -12,7 +12,7 @@ struct dummyemotiv_aux {
 
 int dummyemotiv_init(pipe_* p, linkedlist* l)  {
   int channels = 14;
-  int frames = 6; 
+  int frames = 16; 
   set_parameter_int(p, "channels", &channels);
   set_parameter_int(p, "frames", &frames);
   int n = 2;

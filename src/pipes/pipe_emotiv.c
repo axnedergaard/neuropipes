@@ -19,7 +19,7 @@ int emotiv_init(pipe_* p, linkedlist* l)  {
   
   int channels = 14;
   int frames = 16;
-  set_parameter_int(pl, "frames", frames);
+  set_parameter_int(p, "frames", &frames);
   int n = 2;
   int shape[n], stride[n];
   stride[0] = 1;
