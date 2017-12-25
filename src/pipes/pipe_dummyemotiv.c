@@ -12,38 +12,25 @@ struct dummyemotiv_aux {
 
 int dummyemotiv_init(pipe_* p, linkedlist* l)  {
   int channels = 14;
-  int records = 16;
-  char *param_records = get_parameter(p, "records");
-  if (param_records != NULL)  {
-    records = atoi(param_records);
-    free(param_records);
-  }
+  int frames = 6; 
+  set_parameter_int(p, "channels", &channels);
+  set_parameter_int(p, "frames", &frames);
   int n = 2;
   int shape[n], stride[n];
   stride[0] = 1;
   stride[1] = 1;
   shape[0] = channels;
-  shape[1] = records;
+  shape[1] = frames;
   data *output = data_create(n, shape, stride);
-
   pipe_set_output(p, output);
 
   struct dummyemotiv_aux *aux = (struct dummyemotiv_aux*)malloc(sizeof(struct dummyemotiv_aux));
-  
   aux->buffer = (double*)malloc(data_size(pipe_get_output(p)));
   aux->random = 1;
-
-  char *random_param = get_parameter(p, "random");
-  if (random_param != NULL)  {
-    if (strcmp(random_param, "0") == 0)  {
-      aux->random = 0;
-    }
-  }
-
+  set_parameter_int(p, "random", &aux->random);
   if (aux->random == 1)  {
     srand(time(NULL));
   }
-  
   pipe_set_auxiliary(p, aux);
   
   return 1;
@@ -52,9 +39,11 @@ int dummyemotiv_init(pipe_* p, linkedlist* l)  {
 int dummyemotiv_run(pipe_* p, linkedlist* l)  {
   data *output = pipe_get_output(p);
   struct dummyemotiv_aux *aux = (struct dummyemotiv_aux*)pipe_get_auxiliary(p);
+  
   double *buffer = aux->buffer;
   int random = aux->random;
   int *shape = data_get_shape(output);
+
   for (int i = 0; i < shape[0]; i++)  {
     for (int j = 0; j < shape[1]; j++)  { 
       if (random == 1)  {
@@ -65,7 +54,9 @@ int dummyemotiv_run(pipe_* p, linkedlist* l)  {
       }
     }
   }
+
   data_copy_to_data(output, buffer);
+
   return 1; 
 }
 

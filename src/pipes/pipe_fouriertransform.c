@@ -16,16 +16,20 @@ int fouriertransform_init(pipe_* p, linkedlist* l)  {
   if (input == NULL)  {
     fprintf(stderr, "fouriertransform_init: pipe_ must have 1 input\n");
     return 0;
+  } 
+  struct fouriertransform_auxiliary *aux = (struct fouriertransform_auxiliary*)malloc(sizeof(struct fouriertransform_auxiliary));
+  pipe_set_auxiliary(p, aux);
+  if (data_type(input) == TYPE_REAL)  {
+    pipe_set_output(p, data_create_complex_from_real(input));
   }
-  
-  pipe_set_output(p, data_create_complex_from_real(input));  //TODO extend to C->C case using data_get_type()
+  else  {  //complex input
+    pipe_set_output(p, data_create_from(input));
+  }
 
   //init aux and FFT TODO mem alloc fail frees?
   int *shape = data_get_shape(input);
   int c = shape[0];  //number of channels
-  int n = shape[1];  //number of recordings
- 
-  struct fouriertransform_auxiliary *aux = (struct fouriertransform_auxiliary*)malloc(sizeof(struct fouriertransform_auxiliary));
+  int n = shape[1];  //number of frames
   if (aux == NULL)  {
     fprintf(stderr, "fouriertransform_init: mem alloc for aux failed\n");
     return 0;
@@ -48,8 +52,6 @@ int fouriertransform_init(pipe_* p, linkedlist* l)  {
   for (int i = 0; i < c; i++)  {
     aux->ft_p[i] = fftw_plan_dft_1d(n, (aux->ft_in + i*n), (aux->ft_out + i*n), FFTW_FORWARD, FFTW_ESTIMATE);
   }
-  
-  pipe_set_auxiliary(p, aux);
  
   return 1;
 }
@@ -60,15 +62,14 @@ int fouriertransform_run(pipe_* p, linkedlist* l)  {
     fprintf(stderr, "fouriertransform_run: pipe_ has no input\n");
     return 0;
   }
-
   struct fouriertransform_auxiliary *aux = (struct fouriertransform_auxiliary*)pipe_get_auxiliary(p);
+  
+  int c = data_get_shape(input)[0];
   
   data_copy_from_data_real_to_complex(input, (void*)aux->ft_in);
 
-  int c = data_get_shape(input)[0];
-  //fft
   for (int i = 0; i < c; i++)  {
-    fftw_execute(aux->ft_p[i]);
+    fftw_execute(aux->ft_p[i]); //fft
   }
   
   data_copy_to_data(pipe_get_output(p), (void*)aux->ft_out);

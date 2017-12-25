@@ -12,6 +12,7 @@ struct writesharedmem_aux {
   key_t key;
   int shmid;
   char *shm;
+  char *buffer; //string containing doubles to be written
 };
 
 int writesharedmem_init(pipe_ *p, linkedlist *l)  {
@@ -20,8 +21,8 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "writesharedmem_init: writesharedmem pipe must have an input\n");
     return -1;
   }
-
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)malloc(sizeof(struct writesharedmem_aux));
+  pipe_set_auxiliary(p, aux);
 
   int shmid;
   key_t key = 6667;
@@ -29,18 +30,14 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   int data_len = data_get_len(input);
   int mem_len = (1 + 2*n + data_len)*DLEN;  //n_dimensions + shape+stride + data
   char *shm;
+  char *buffer = (char*)malloc(sizeof(char)*DLEN);
+  set_parameter_int(p, "key", &key);
 
-  char *key_param = get_parameter(p, "key");
-  if (key_param != NULL)  { 
-    key = atoi(key_param);
-    free(key_param); 
-  }
   //open and attach shared memory
   if ((shmid = shmget(key, mem_len, IPC_CREAT | 0666)) < 0)  {  //TODO permissions?
     fprintf(stderr, "writesharedmem_init: failed to create shared memory\n");
     return -1;
   }
-
   if ((shm = shmat(shmid, NULL, 0)) < 0)  {  
     fprintf(stderr, "writesharedmem_init: failed to attach shared memory\n"); 
     return -1;
@@ -49,8 +46,7 @@ int writesharedmem_init(pipe_ *p, linkedlist *l)  {
   aux->key = key;
   aux->shmid = shmid;
   aux->shm = shm;
-
-  pipe_set_auxiliary(p, aux);
+  aux->buffer = buffer;
 
   return 1;
 }
@@ -66,9 +62,8 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   int n = data_spec(input, &shape, &stride);
   int data_len = data_get_len(input);
   double *input_buffer = data_get_buffer(input);
-
   char *s = aux->shm;
-  char *buffer = (char*)malloc(sizeof(char)*DLEN); //string containing doubles to be written
+  char *buffer = aux->buffer;
   
   //write to memory
   read_lock(input);

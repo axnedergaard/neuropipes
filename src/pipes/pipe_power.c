@@ -4,9 +4,13 @@
 #include "../pipe.h"
 
 int power_init(pipe_ *p, linkedlist *l)  {
-  data *input = *(data**)linkedlist_head(l); 
+  data *input = *(data**)linkedlist_head(l);
   if (input == NULL)  {
-    fprintf(stderr, "power_init: pipe_ must have 1 input\n");
+    fprintf(stderr, "power_init: pipe must have 1 input\n");
+    return 0;
+  }
+  if (data_type(input) != TYPE_COMPLEX)  {
+    fprintf(stderr, "power_init: pipe input must be complex\n");
     return 0;
   }
  
@@ -17,7 +21,6 @@ int power_init(pipe_ *p, linkedlist *l)  {
   shape[1] = input_shape[1]/4+1; //complex->real->only need half for power due to complex symmetry, +1 extra for 0 freq
   stride[0] = 1;
   stride[1] = 1;  
-
   pipe_set_output(p, data_create(n, shape, stride));
 
   return 1;

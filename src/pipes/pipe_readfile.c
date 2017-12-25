@@ -1,6 +1,7 @@
 #include "../pipe.h"
 #include "../data.h"
 #include "../edflib.h"
+#include "../parameters.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,15 +13,21 @@ struct readfile_aux {
 };
 
 int readfile_init(pipe_ *p, linkedlist *l)  {
+  struct readfile_aux *aux = (struct readfile_aux*)malloc(sizeof(struct readfile_aux));
+  pipe_set_auxiliary(p, aux);
+  
   //read header to get dimensions
   int c;
   int n;
   int set_n;
-  char *fn = "recording.edf";
+  char fn[PARAM_MAX];
+  strncpy(fn, "save.edf", PARAM_MAX);
+  set_parameter_string(p, "fn", fn);
 
   struct edf_hdr_struct *hdr = (struct edf_hdr_struct*)malloc(sizeof(struct edf_hdr_struct));
   if (edfopen_file_readonly(fn, hdr, EDFLIB_READ_ALL_ANNOTATIONS) != 0)  {
-    printf("failed to read file\n");
+    printf("failed to open file %s\n", fn);
+    return -1;
   }
   c = hdr->edfsignals;
   struct edf_param_struct sig_par = hdr->signalparam[0];  //assume n and sets is same for all channels
@@ -35,12 +42,9 @@ int readfile_init(pipe_ *p, linkedlist *l)  {
   stride[1] = 1;
   pipe_set_output(p, data_create(2, shape, stride));
 
-  struct readfile_aux *aux = (struct readfile_aux*)malloc(sizeof(struct readfile_aux));
   aux->current_set = 0;
   aux->set_n = set_n;
   aux->handle = hdr->handle;
-
-  pipe_set_auxiliary(p, aux);
 
   return 1;
 }

@@ -23,6 +23,8 @@ int filter_init(pipe_* p, linkedlist* l)  {
   if (linkedlist_size(l) != 1)  {
     fprintf(stderr, "filter_init: pipe_ must have 1 input\n");
   }
+  struct filter_aux *aux = (struct filter_aux*)malloc(sizeof(struct filter_aux));  
+  pipe_set_auxiliary(p, aux);
   data *output = data_create_from(input);
   pipe_set_output(p, output);
 
@@ -33,46 +35,11 @@ int filter_init(pipe_* p, linkedlist* l)  {
   int lc = 8;  //lower cutoff frequency
   int hc = 12;  //higher (upper) cutoff frequency
   int rate = 128; //sampling rate
-  
-  char *param = get_parameter(p, "pass");  
-  if (param != NULL)  {
-    if (strcmp(param, "band") == 0)  {  
-      strncpy(pass, "band", PARAM_MAX); 
-    }
-    else if (strcmp(param, "high") == 0)  {
-      strncpy(pass, "high", PARAM_MAX);
-    }
-    else if (strcmp(param, "low") == 0)  {
-      strncpy(pass, "low", PARAM_MAX);
-    }
-    free(param);
-  }  
-  param = get_parameter(p, "lc");
-  if (param != NULL)  {
-    lc = atoi(param);
-    free(param);
-  }
-  param = get_parameter(p, "hc");
-  if (param != NULL)  {
-    hc = atoi(param);
-    free(param);
-  }
-  param = get_parameter(p, "order");
-  if (param != NULL)  {
-    order = atoi(param);
-    free(param);
-  }
-  param = get_parameter(p, "rate");
-  if (param != NULL)  {
-    rate = atoi(param);
-    free(param);
-  }
-
-  struct filter_aux *aux = (struct filter_aux*)malloc(sizeof(struct filter_aux));  
-  if (aux == NULL)  {
-    fprintf(stderr, "filter_init: failed to alloc mem for aux\n");
-    return 0;
-  }
+  set_parameter_string(p, "pass", pass);
+  set_parameter_int(p, "order", &order);
+  set_parameter_int(p, "lc", &lc);
+  set_parameter_int(p, "hc", &hc);
+  set_parameter_int(p, "rate", &rate);
   
   //set spec
   char *spec = (char*)malloc(sizeof(char)*SPEC_MAX);
@@ -102,8 +69,6 @@ int filter_init(pipe_* p, linkedlist* l)  {
     aux->buf[i] = fid_run_newbuf(aux->run);
   }
 
-  pipe_set_auxiliary(p, aux);
-
   return 1;
 }
 
@@ -113,11 +78,9 @@ int filter_run(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "filter_run: must have 1 input\n");
     return 0;
   }
+  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);
   data *output = pipe_get_output(p);
 
-  struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);
-
-  //copy from data
   data_copy_from_data(input, (void*)aux->input);
   
   //filter
@@ -130,7 +93,6 @@ int filter_run(pipe_ *p, linkedlist *l)  {
     }
   }
   
-  //copy to memory
   data_copy_to_data(output, (void*)aux->output); 
 
   return 1;

@@ -55,4 +55,33 @@ char *get_parameter(pipe_* p, char *s)  {
   return matched_param; //note: user must dealloc matched_param themselves
 }
 
+int set_parameter_int(pipe_ *p, char *s, int *d)  {
+  char *param = get_parameter(p, s);
+  if (param != NULL)  {
+    *d = atoi(param);
+    free(param);
+    return 1;
+  }
+  return 0;
+}
 
+int set_parameter_double(pipe_ *p, char *s, double *d)  {
+  char *param = get_parameter(p, s);
+  if (param != NULL)  {
+    *d = atof(param);
+    free(param);
+    return 1;
+  }
+  return 0;
+}
+
+
+int set_parameter_string(pipe_ *p, char *s, char *d)  { //note that char* and not pointer to char* is used, unlike for int or double
+  char *param = get_parameter(p, s);
+  if (param != NULL)  {
+    strncpy(d, param, PARAM_MAX);
+    free(param);
+    return 1;
+  }
+  return 0;
+}	

@@ -16,15 +16,15 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   if (input == NULL)  {
     fprintf(stderr, "inversefouriertransform_init: pipe_ must have 1 input\n");
     return 0;
-  }
-  
+  } 
+  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)malloc(sizeof(struct auxiliary_fouriertransform));
+  pipe_set_auxiliary(p, aux);
   pipe_set_output(p, data_create_real_from_complex(input));
 
   int *shape = data_get_shape(input);
   int c = shape[0];  //number of channels
   int n = shape[1]/2;  //number of recordings, divide by 2 because input complex
   
-  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)malloc(sizeof(struct auxiliary_fouriertransform));
   if (aux == NULL)  {
     fprintf(stderr, "inversefouriertransform_init: mem alloc for aux failed\n");
     return 0;
@@ -47,7 +47,6 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
   for (int i = 0; i < c; i++)  {
     aux->ft_p[i] = fftw_plan_dft_1d(n, (aux->ft_in + i*n), (aux->ft_out + i*n), FFTW_BACKWARD, FFTW_ESTIMATE);
   }
-  pipe_set_auxiliary(p, aux);
 
   return 1;
 }
@@ -69,8 +68,8 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
   int n = shape[1]/2;
   for (int i = 0; i < c; i++)  {
     fftw_execute(aux->ft_p[i]);
-    for (int j = 0; j < n; j++)  {  //divide by n because fftw3 inverse fft doesn't automatically TODO CBLAS?
-      *(aux->ft_out + i*n + j) = (double)*(aux->ft_out + i*n + j) / (double)n;
+    for (int j = 0; j < n; j++)  {  
+      *(aux->ft_out + i*n + j) = (double)*(aux->ft_out + i*n + j) / (double)n;  //divide by n because fftw3 inverse fft doesn't automatically TODO CBLAS?
     }
   }
 

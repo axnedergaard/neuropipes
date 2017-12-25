@@ -40,7 +40,7 @@ int rpi_init(pipe_* p, linkedlist* l)  {
   options.c_lflag = 0;
   tcflush(uart_fs, TCIFLUSH);
   tcsetattr(uart_fs, TCSANOW, &options);
-  aux->uart_fs = uart_fs;
+  aux->uart_fs = uart_fs; 
 
   //initialise buffer
   for (int i = 0; i < RPI_BUF_LEN; i++)  aux->buf[i] = 0x00; 
