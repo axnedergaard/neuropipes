@@ -5,7 +5,7 @@
 #include "../pipe.h"
 #include <fftw3.h>
 
-struct auxiliary_fouriertransform {
+struct auxiliary_inversefouriertransform {
   fftw_plan *ft_p;
   fftw_complex *ft_in;
   fftw_complex *ft_out;
@@ -17,7 +17,7 @@ int inversefouriertransform_init(pipe_ *p, linkedlist *l)  {
     fprintf(stderr, "inversefouriertransform_init: pipe_ must have 1 input\n");
     return 0;
   } 
-  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)malloc(sizeof(struct auxiliary_fouriertransform));
+  struct auxiliary_inversefouriertransform *aux = (struct auxiliary_inversefouriertransform*)malloc(sizeof(struct auxiliary_inversefouriertransform));
   pipe_set_auxiliary(p, aux);
   pipe_set_output(p, data_create_real_from_complex(input));
 
@@ -58,7 +58,7 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
     return 0;
   }
  
-  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)pipe_get_auxiliary(p);
+  struct auxiliary_inversefouriertransform *aux = (struct auxiliary_inversefouriertransform*)pipe_get_auxiliary(p);
   
   data_copy_from_data(input, (void*)aux->ft_in);
 
@@ -80,9 +80,13 @@ int inversefouriertransform_run(pipe_ *p, linkedlist *l)  {
 }
 
 int inversefouriertransform_kill(pipe_* p, linkedlist* l)  {
-  struct auxiliary_fouriertransform *aux = (struct auxiliary_fouriertransform*)pipe_get_auxiliary(p);
-  fftw_destroy_plan(*aux->ft_p);
+  struct auxiliary_inversefouriertransform *aux = (struct auxiliary_inversefouriertransform*)pipe_get_auxiliary(p);
+  for (int i = 0; i < data_get_shape(pipe_get_output(p))[0]; i++)  {
+    fftw_destroy_plan(aux->ft_p[i]);
+  }
+  free(aux->ft_p);
   fftw_free(aux->ft_in);
   fftw_free(aux->ft_out);
+  fftw_cleanup();
   return 1;
 }

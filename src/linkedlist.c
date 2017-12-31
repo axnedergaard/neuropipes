@@ -31,6 +31,7 @@ linkedlist *linkedlist_create()  {
 }
 
 int linkedlist_destroy(linkedlist* l)  {  //TODO destroy nodes?
+  linkedlist_clear(l);
   free(l->iterater);
   free(l);
   return 1;

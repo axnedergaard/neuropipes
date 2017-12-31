@@ -32,8 +32,11 @@ void read_lock(data*);
 void write_lock(data*);
 void read_unlock(data*);
 void write_unlock(data*);
-void data_increment_readers(data*);
+void data_increment_readers(data*, pthread_t*);
 void data_broadcast_read(data*);
+int data_thread_index(data*);
+void data_reset_reads(data*);
+void data_kill(data*);
 
 int data_type(data*);  //get type (e.g. real or complex) from data
 int data_size(data*);  //get size of buffer
@@ -45,7 +48,5 @@ double *data_get_buffer(data*);
 int *data_get_stride(data*);
 int *data_get_shape(data*);
 int data_get_blocking(data*);
-int data_get_kill(data*);  //testing purposes...
-
 
 #endif

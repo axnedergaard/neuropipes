@@ -96,8 +96,6 @@ int writesharedmem_run(pipe_ *p, linkedlist *l)  {
   }
   
   read_unlock(input);  
- 
-  free(buffer);
 
   return 1; 
 }
@@ -106,5 +104,6 @@ int writesharedmem_kill(pipe_* p, linkedlist* l)  {
   struct writesharedmem_aux *aux = (struct writesharedmem_aux*)pipe_get_auxiliary(p);
   shmdt(aux->shm);
   shmctl(aux->shmid, 0, NULL);
+  free(aux->buffer);
   return 1;
 }

@@ -24,7 +24,7 @@ hashtable* hashtable_create()  {  //TODO mem
   return ht;
 }
 int hashtable_destroy(hashtable* ht)  {
-  //?
+  free(ht);
   return 0;
 }
 
@@ -45,8 +45,14 @@ int hashtable_insert(hashtable* ht, char* key, void* entry)  {
 }
 
 int hashtable_remove(hashtable *ht, char *key)  {
-  //?
-  return 0;
+  hash *h;
+  HASH_FIND_STR(ht->table, key, h);
+  if (h == NULL)  {
+    return -1;
+  }
+  HASH_DEL(ht->table, h);
+  free(h);
+  return 1;
 }
 
 void* hashtable_lookup(hashtable *ht, char *key)  {

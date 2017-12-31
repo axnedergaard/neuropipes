@@ -10,14 +10,14 @@ pipeline* pipeline_create();
 int pipeline_destroy(pipeline*);
 int *pipeline_adjacency_matrix(pipeline*);
 int pipeline_size(pipeline*);
-void pipeline_set_loop(pipeline* pl, int);
-int pipeline_get_loop(pipeline* pl);
-void pipeline_set_interval(pipeline *pl, double);
-int pipeline_insert(pipeline*, char*, int);
-int pipeline_insert_edge(pipeline*, int, int);
+int pipeline_add(pipeline*, char*, int);
+int pipeline_link(pipeline*, int, int);
 int pipeline_init(pipeline*);
 int pipeline_run(pipeline*);
 int *pipeline_adjacency_matrix(pipeline*);
-int pipeline_reset(pipeline*);
+int pipeline_segment(pipeline*);
+int pipeline_start_threads(pipeline*);
+int pipeline_stop_threads(pipeline*);
+int pipeline_kill(pipeline*);
 
 #endif

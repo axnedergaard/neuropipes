@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define INITIAL_THREADS 2 //TODO 1 invalid?
+
 //len==shape[0]*...*shape[n] must hold
 //number of elements in dimension i is shape(i)/stride(i) where 1 <= stride(i) <= shape(i)
 struct data {
@@ -11,6 +13,7 @@ struct data {
   int n; //number of dimensions
   int *shape; //sizes of each dimensions
   int *stride;  //strides of each dimension
+  
   int blocking;
   pthread_mutex_t mutex;
   pthread_cond_t cond_written;
@@ -18,6 +21,11 @@ struct data {
   int writes; 
   int reads;
   int readers;
+  pthread_t **threads;
+  int threads_n;
+  int threads_max;
+  int *thread_reads;
+  int *thread_readers;
   int kill;
 };
 
@@ -29,7 +37,15 @@ data* data_create(int n, int *shape, int *stride)  {
   }
   d->n = n;
   d->shape = (int*)malloc(sizeof(int)*d->n);
+  if (d->shape == NULL)  {
+    fprintf(stderr, "data_create: failed to allocate memory for shape\n");
+    return NULL;
+  }
   d->stride = (int*)malloc(sizeof(int)*d->n);
+  if (d->stride == NULL)  {
+    fprintf(stderr, "data_create: failed to allocate memory for stride\n");
+    return NULL;
+  }
   d->len = 1;
   //printf("creating data n=%d stride0=%d stride1=%d\n", n, stride[0], stride[1]);
   for (int i = 0; i < d->n; i++)  {
@@ -50,7 +66,18 @@ data* data_create(int n, int *shape, int *stride)  {
   if ((d->buffer = (double*)malloc(sizeof(double)*d->len)) == NULL)  {
     fprintf(stderr, "data_create: failed to allocate memory for buffer\n");
   }
+
   d->blocking = 0;
+
+  d->reads = 0;
+  d->readers = 0; 
+  d->writes = 0;
+  d->threads_max = 0;
+  d->threads_n = 0;
+  d->threads = NULL;
+  d->thread_reads = NULL;
+  d->thread_readers = NULL;
+  d->kill = 0;
 //  printf("created data with %d %d\n", d->shape[0], d->shape[1]);
   
   return d;
@@ -72,6 +99,15 @@ data* data_create_from_string(char *str)  {
 }
 
 int data_destroy(data *d)  {
+  if (d->blocking)  {
+    pthread_mutex_destroy(&d->mutex);
+    pthread_cond_destroy(&d->cond_written);
+    pthread_cond_destroy(&d->cond_read);
+    free(d->threads);
+    free(d->thread_reads);
+    free(d->thread_readers);
+
+  }
   free(d->buffer);
   free(d->shape);
   free(d->stride);
@@ -221,27 +257,85 @@ int data_make_blocking(data *d)  {  //make data blocking
   d->reads = 0;
   d->readers = 0; 
   d->writes = 0;
+  d->threads_max = INITIAL_THREADS;
+  d->threads_n = 0;
   d->kill = 0;
+  d->threads = (pthread_t**)malloc(sizeof(pthread_t*)*d->threads_max);
+  d->thread_reads = (int*)malloc(sizeof(int)*d->threads_max);
+  d->thread_readers = (int*)malloc(sizeof(int)*d->threads_max);
   return 1;
 }
 
-void data_increment_readers(data *d)  {
+void data_increment_readers(data *d, pthread_t *t)  {
   d->readers++;
+  int new_thread = 1;
+  for (int i = 0; i < d->threads_n; i++)  {
+    if (t == d->threads[i])  {  //thread already registered
+      new_thread = 0;
+      d->thread_readers[i]++;
+    }
+  }
+  if (new_thread == 1)  {  //register new thread
+    if (d->threads_n >= d->threads_max)  {  //expand if needed
+      d->threads_max *= 2;
+      pthread_t **threads_new = realloc(d->threads, sizeof(pthread_t*)*d->threads_max);
+      d->threads = threads_new;
+    }
+    d->threads[d->threads_n] = t;
+    d->thread_readers[d->threads_n] = 1;
+    d->thread_reads[d->threads_n] = 0;
+    d->threads_n++;
+  }
+}
+
+int data_allow_read(data *d)  {
+  int index = data_thread_index(d);
+  if (d->thread_reads[index] < d->thread_readers[index])  {  //more reads allowed for thread
+    return 1;
+  }
+  else  {  //no more reads allowed for thread
+    return 0;
+  }
+}
+
+int data_thread_index(data *d)  {
+  pthread_t t = pthread_self();
+  for (int i = 0; i < d->threads_n; i++)  {
+    if (pthread_equal(t, *d->threads[i]) != 0)  {  //thread matched
+      return i;
+    }
+  }
+  return -1; //not matched (error)
+}
+
+void data_reset_reads(data *d)  {
+  d->reads = 0;
+  for (int i = 0; i < d->threads_n; i++)  {
+    d->thread_reads[i] = 0;
+  }
+}
+
+void data_kill(data *d) { 
+  pthread_mutex_lock(&d->mutex);
+  d->kill = 1;
+  data_unblock(d);
+  pthread_mutex_unlock(&d->mutex);
 }
 
 int data_unblock(data *d)  {
-  pthread_mutex_lock(&d->mutex);
-  d->kill = 1;
   pthread_cond_broadcast(&d->cond_written);
   pthread_cond_broadcast(&d->cond_read);
-  pthread_mutex_unlock(&d->mutex);
   return 1;
 }
 
 void read_lock(data *d)  {
   if (d->blocking)  {
     pthread_mutex_lock(&d->mutex); 
-    while ((d->kill != 1) && (d->writes == 0))  {
+    while ((d->writes == 0) || (data_allow_read(d) == 0))  {
+      if (d->kill == 1)  {
+	pthread_mutex_unlock(&d->mutex);
+        pthread_exit(NULL);
+      }
       pthread_cond_wait(&d->cond_written, &d->mutex);
     }
   }
@@ -250,7 +344,11 @@ void read_lock(data *d)  {
 void write_lock(data *d)  {
   if (d->blocking)  {
     pthread_mutex_lock(&d->mutex);
-    while ((d->kill != 1) && (d->writes > 0)  && (d->reads < d->readers))  {
+    while ((d->writes > 0)  && (d->reads < d->readers))  {
+      if (d->kill == 1)  {
+	pthread_mutex_unlock(&d->mutex);
+        pthread_exit(NULL);
+      }
       pthread_cond_wait(&d->cond_read, &d->mutex);
     }
   }
@@ -258,8 +356,8 @@ void write_lock(data *d)  {
 
 void write_unlock(data *d)  {
   if (d->blocking)  {
-    d->reads = 0;
     d->writes++;
+    data_reset_reads(d);
     pthread_cond_broadcast(&d->cond_written);
     pthread_mutex_unlock(&d->mutex);
   }
@@ -268,6 +366,8 @@ void write_unlock(data *d)  {
 void read_unlock(data *d)  {
   if (d->blocking)  {
     d->reads++;
+    int index = data_thread_index(d);
+    d->thread_reads[index]++;
     if (d->reads >= d->readers)  {
       d->writes = 0;
       pthread_cond_broadcast(&d->cond_read);
@@ -328,6 +428,3 @@ int data_get_blocking(data *d)  {
   return d->blocking;
 }
 
-int data_get_kill(data *d)  {  //testing purposes...
-  return d->kill;
-}

@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "pipebuilder.h"
+
+#define SPEC_MAX 256  //TODO elsewhere?
 
 struct pipe {
   int id;
@@ -15,7 +16,8 @@ struct pipe {
   int concurrent; 
   int params_n;
   char **params;
-  concurrent_pipe *concurrent_pipe;
+  char *type;
+  int segment;
   //debug_pipe *debug_pipe; 
 };
 
@@ -35,9 +37,10 @@ pipe_* pipe_create()  {
     p->auxiliary = NULL;
     p->status = -1;  //not init
     p->concurrent = 0;
-    p->concurrent_pipe = NULL;
     p->params_n = 0;
     p->params = NULL;
+    p->type = NULL;
+    p->segment = 0;
   }
   return p;
 }
@@ -47,7 +50,9 @@ int pipe_destroy(pipe_ *p)  {
     //debug_pipe_destroy(p->debug_pipe);
     if (p->output != NULL)  data_destroy(p->output);
     if (p->auxiliary != NULL)  free(p->auxiliary);
-    if (p->concurrent_pipe != NULL)  concurrent_pipe_destroy(p->concurrent_pipe);
+    free(p->type);
+    for (int i = 0; i < p->params_n; i++)  free(p->params[i]);
+    free(p->params);
     free(p);
     return 1;
   }
@@ -59,29 +64,6 @@ int pipe_init(pipe_* p, linkedlist* l)  {
   if (p != NULL)  {
     if (p->init != NULL)  {
         if (p->init(p, l) == 1)  {  //init success
-	  //if concurrent pipe, create concurrent pipe struct and make output data blocking
-          if (p->concurrent == 1)  { 
-            p->concurrent_pipe = concurrent_pipe_create();
-            if (p->concurrent_pipe == NULL)  {
-              fprintf(stderr, "pipe_init: failed to create concurrent pipe\n");
-            }
-            if (p->output != NULL)  {
-              data_make_blocking(p->output);
-            }
-          }
-	  //increment readers for blocking inputs
-          data **data_ptr = NULL;
-          if (l != NULL)  {
-            while ((data_ptr = (data**)linkedlist_iterate(l)) != NULL)  {  
-              data *d = *data_ptr;
-              if (data_get_blocking(d))  {
-                if (p->concurrent == 1)  {  //give warning if concurrent pipe has blocking input as this is not supported
-                  printf("pipe_init: warning concurrent pipes reading blocking input is not supported\n");
-                }
-                data_increment_readers(d); 
-              }
-            }
-          }
           p->status = 0;  //initialised
           return 1;
         }
@@ -90,15 +72,13 @@ int pipe_init(pipe_* p, linkedlist* l)  {
         }
     }
     else  {
-      fprintf(stdout, "pipe_init: pipe has no init call\n"); 
-      return -1;
+      fprintf(stderr, "pipe_init: pipe has no init call\n"); 
     }
   } 
-  return 0; 
+  return -1; 
 }
 
 int pipe_run(pipe_* p, linkedlist* l)  {
-  //printf("running pipe %p\n", p);
   int status = p->run(p, l);  //run
   if (status >= 0)  {  //run success
     p->status = 1; 
@@ -206,12 +186,19 @@ int pipe_get_concurrent(pipe_* p)  {
   return p->concurrent;
 }
 
-concurrent_pipe *pipe_get_concurrent_pipe(pipe_* p)  {
-  return p->concurrent_pipe;
+void pipe_set_segment(pipe_* p, int s)  {
+  p->segment = s;
 }
-/*
-debug_pipe *pipe_get_debug_pipe(pipe_* p)  {
-  return p->debug_pipe;
-}*/
 
+int pipe_get_segment(pipe_* p)  {
+  return p->segment;
+}
+
+void pipe_set_type(pipe_* p, char *type)  {
+  p->type = type;
+}
+
+char *pipe_get_type(pipe_* p)  {
+  return p->type;
+}
 

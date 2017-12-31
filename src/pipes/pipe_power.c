@@ -34,7 +34,7 @@ int power_run(pipe_ *p, linkedlist *l)  {
   }
   data *output = pipe_get_output(p);
 
-  double *buffer = (double*)malloc(data_size(output));
+  double buffer[data_size(output)];
   int *input_shape, *input_stride;
   data_spec(input, &input_shape, &input_stride);
   double *input_buffer = data_get_buffer(input);

@@ -3,7 +3,7 @@
 
 #include "pipe.h"
 
-#define PARAM_MAX 32  //max length of parameter
+#define PARAM_MAX 128  //max length of parameter
 
 int tokenise(char*, char**, int*, char***); //separate pipe specification into type, number of parameters and parameters
 char *get_parameter(pipe_*, char*);  //get parameter as string

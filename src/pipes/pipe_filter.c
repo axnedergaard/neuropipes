@@ -31,7 +31,7 @@ int filter_init(pipe_* p, linkedlist* l)  {
   //get parameters 
   char pass[PARAM_MAX];  //filter pass type
   strncpy(pass, "band", PARAM_MAX);
-  int order = 2; //filter order
+  int order = 4; //filter order
   int lc = 8;  //lower cutoff frequency
   int hc = 12;  //higher (upper) cutoff frequency
   int sf = 128; //sampling frquency
@@ -43,6 +43,7 @@ int filter_init(pipe_* p, linkedlist* l)  {
   
   //set spec
   char *spec = (char*)malloc(sizeof(char)*SPEC_MAX);
+  char *spec_free = spec;  //necessary to free memory of spec as fid_parse shifts the pointer
   if (strcmp(pass, "band") == 0)  {
     snprintf(spec, SPEC_MAX, "BpBu%d/%d-%d", order, lc, hc);
   }
@@ -52,17 +53,19 @@ int filter_init(pipe_* p, linkedlist* l)  {
   else if (strcmp(pass, "low") == 0)  {
     snprintf(spec, SPEC_MAX, "LpBu%d/%d", order, hc);
   }
- 
+
   //create filter
   char *error = fid_parse(sf, &spec, &aux->ff);
   if (error != NULL)  {
     fprintf(stderr, "pipe_filter_init: fidlib parse error %s\n", error);
   }
+  free(error);
+  free(spec_free);
 
   int c = data_get_shape(output)[0];  //number of channels
   aux->run = fid_run_new(aux->ff, &aux->func);
-  aux->input = (double*)malloc(data_size(output));
-  aux->output = (double*)malloc(data_size(output));
+  aux->input = (double*)malloc(sizeof(double)*data_size(output));
+  aux->output = (double*)malloc(sizeof(double)*data_size(output));
   aux->buf = (void**)malloc(c*sizeof(void*));
 
   for (int i = 0; i < c; i++)  {
@@ -100,9 +103,14 @@ int filter_run(pipe_ *p, linkedlist *l)  {
 
 int filter_kill(pipe_* p, linkedlist* l)  {
   struct filter_aux *aux = (struct filter_aux*)pipe_get_auxiliary(p);
-  fid_run_freebuf(aux->buf);
+  int c = data_get_shape(pipe_get_output(p))[0];
+  for (int i = 0; i < c; i++)  {
+    fid_run_freebuf(aux->buf[i]);
+  }
+  free(aux->buf);
   fid_run_free(aux->run);
   free(aux->input);
   free(aux->output);
+  free(aux->ff);
   return 1;
 }

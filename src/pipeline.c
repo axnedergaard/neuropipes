@@ -1,38 +1,29 @@
 #include "pipeline.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "linkedlist.h"
-#include "pipebuilder.h"
-#include "piperegistry.h"
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdint.h>
 #include "gettime.h"
 #include <string.h>
 #include <signal.h>
+#include "linkedlist.h"
+#include "pipebuilder.h"
+#include "piperegistry.h"
+#include "segment.h"
 
 #define INITIAL_MAX 8
 
-static int quit = 0;
-
-void sig_handler(int signo)  {
-  if (signo == SIGINT)  {
-    quit = 1;
-  }
-}
-
 struct pipeline {  //graph
   pipe_ **nodes;  //critical: assume (entries[x] | 0 <= x < entries_n)
+  segment **segments;  
   int *sort; //in-order sort of nodes
-  int *nc_sort;  //in-order sort of non-concurrent nodes
-  int *c_sort;  //in-order sort of concurrent nodes
-  int nc_n; //number of non-concurrent nodes
   int nodes_n;
   int nodes_max;
+  int segments_n;
+  int segments_max;
   linkedlist **adjacency_list;  //adjacency list with ints
   linkedlist **in_data; //in data for every node
-  int loop;
-  double interval;
   int next_id;
 };
 
@@ -42,18 +33,23 @@ pipeline* pipeline_create()  {
     fprintf(stderr, "pipeline_create: failed to allocate memory for pipe");
     return NULL;
   }
-
-  quit = 0;
  
   pl->next_id = 0;
   pl->nodes_max = INITIAL_MAX;
+  pl->segments_max = INITIAL_MAX;
   pl->nodes_n = 0;
-  pl->nc_n = 0;
+  pl->segments_n = 0;
 
   pl->nodes = (pipe_**)malloc(sizeof(pipe_*)*pl->nodes_max);
   if (pl->nodes == NULL)  {
     fprintf(stderr, "pipeline_create: failed to allocate memory for nodes");
     free(pl);
+    return NULL;
+  }
+
+  pl->segments = (segment**)malloc(sizeof(segment*)*pl->segments_max);
+  if (pl->segments == NULL)  {
+    fprintf(stderr, "pipeline_create: failed to allocate memory for segments\n");
     return NULL;
   }
 
@@ -84,16 +80,12 @@ pipeline* pipeline_create()  {
     return NULL;
   }
 
-  pl->nc_sort = NULL;
-  pl->c_sort = NULL;
-
   for (int i = 0; i < pl->nodes_max; i++)  {
     pl->nodes[i] = NULL;
     pl->sort[i] = -1;  //-1 = invalid
   }
-
-  pl->loop = 1;
-  pl->interval = 0;
+  
+  pipeline_segment(pl);
 
   piperegistry_init();
 
@@ -108,8 +100,6 @@ int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destr
           return 0;
         }
       }
-    }
-    for (int i = 0; i < pl->nodes_n; i++)  {
       if (pl->adjacency_list[i] != NULL)  {
         if (linkedlist_destroy(pl->in_data[i]) == 0)  {
           return 0;
@@ -121,14 +111,31 @@ int pipeline_destroy(pipeline* pl)  {  //excessive to check if null before destr
         }
       }
     }
+    for (int i = 0; i < pl->segments_n; i++)  {
+      segment_destroy(pl->segments[i]);
+    }
     free(pl->nodes);
+    free(pl->adjacency_list);
+    free(pl->in_data);
     free(pl->sort);
-    free(pl->nc_sort);
-    free(pl->c_sort);
+    free(pl->segments);
     free(pl);
+
+    piperegistry_deinit();
+
     return 1;
   }
   return 0;
+}
+
+int pipeline_segment(pipeline *pl)  {
+  if (pl->segments_n >= pl->segments_max)  {
+    pl->segments_max *= 2;
+    segment **segments_new = realloc(pl->segments, sizeof(segment*)*pl->segments_max);
+    pl->segments = segments_new;
+  }
+  pl->segments[pl->segments_n] = segment_create();
+  return pl->segments_n++;
 }
 
 int *pipeline_adjacency_matrix(pipeline *pl)  {
@@ -150,18 +157,6 @@ int *pipeline_adjacency_matrix(pipeline *pl)  {
 
 int pipeline_size(pipeline *pl)  {
   return pl->nodes_n;
-}
-
-void pipeline_set_loop(pipeline *pl, int d)  {
-  pl->loop = d;
-}
-
-int pipeline_get_loop(pipeline *pl)  {
-  return pl->loop;
-}
-
-void pipeline_set_interval(pipeline *pl, double d)  {
-  pl->interval = d;
 }
 
 pipe_ *pipeline_get_pipe(pipeline *pl, int id)  {
@@ -203,9 +198,9 @@ int pipeline_expand(pipeline *pl)  {
   return 1;
 }
 
-int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
+int pipeline_link(pipeline* pl, int u, int v)  {  //create edge u->v
   if ((u < 0) || (u > (pl->nodes_n-1)) || (v < 0) || (v > (pl->nodes_n-1)))  {
-    fprintf(stderr, "pipeline_insert_edge: pipe index out of bounds\n");
+    fprintf(stderr, "pipeline_link: pipe index out of bounds\n");
     return 0;
   }
 
@@ -219,15 +214,21 @@ int pipeline_insert_edge(pipeline* pl, int u, int v)  {  //create edge u->v
   return 1;   
 }
 
-int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
-  pipe_* p = build_pipe(spec, concurrent);
+int pipeline_add(pipeline* pl, char* spec, int segment)  {
+  if (segment >= pl->segments_n)  {
+    fprintf(stderr, "pipeline_add: segment out of bounds\n");
+    return -1;
+  } 
+
+  pipe_* p = build_pipe(spec);
 
   if (p == NULL)  {
-    fprintf(stderr, "pipeline_insert: failed to create pipe\n");
+    fprintf(stderr, "pipeline_add: failed to create pipe\n");
     return -1;
   }
 
   pipe_set_id(p, pl->next_id++);
+  pipe_set_segment(p, segment);
 
   if (pl->nodes_n >= pl->nodes_max)  {  
     pipeline_expand(pl);
@@ -238,10 +239,6 @@ int pipeline_insert(pipeline* pl, char* spec, int concurrent)  {
   pl->in_data[pl->nodes_n] = linkedlist_create();
 
   pl->nodes_n++;  
-
-  if (concurrent == 0)  {
-    pl->nc_n++;
-  }
 
   return pipe_get_id(p);  //return pipe id
 }
@@ -271,121 +268,88 @@ int pipeline_sort(pipeline* pl)  {
   if (added < pl->nodes_n)  {
     printf("pipeline_sort: warning - %d nodes not sorted, cycles exist or graph is not connected\n", pl->nodes_n - added);
   }
+  linkedlist_destroy(S);
   //sort completed
   
-  //separate into concurrent and non-concurrent
-  pl->nc_sort = (int*)malloc(sizeof(int)*pl->nc_n);
-  pl->c_sort = (int*)malloc(sizeof(int)*(added - pl->nc_n));
-
-  int nc_added = 0;
-  int c_added = 0;
-
-  for (int i = 0; i < added; i++)  {  //for every sorted node
-    if (pipe_get_concurrent(pl->nodes[pl->sort[i]]) == 1)  {  //if concurrent
-      pl->c_sort[c_added++] = pl->sort[i];  //add to concurrent sorted
-    }
-    else  {  //else add to non-concurrent sorted
-      pl->nc_sort[nc_added++] = pl->sort[i];
-    }
-  }
-
   return 1;
 }
 
-int pipeline_run(pipeline* pl)  {
-  if (pipeline_size(pl) <= 0)  {  //remove???
-    fprintf(stderr, "no pipes to run\n");
-    return 0;
+int pipeline_start_threads(pipeline *pl)  {
+  segment_main(pl->segments[0]);  //set thread of main segment
+  //start threads of non-main segments
+  for (int i = 1; i < pl->segments_n; i++)  { 
+    segment_thread_start(pl->segments[i]);
   }
+  return 1;
+}
 
-  //double total_time_before = get_clock_time(); 
-
-  //run concurrent pipes
-  for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  { 
-    pipe_ *p = pl->nodes[pl->c_sort[i]];
-    concurrent_pipe_start(pipe_get_concurrent_pipe(p), p, pl->in_data[pl->c_sort[i]], &quit);
+int pipeline_stop_threads(pipeline *pl)  {
+  segment_kill_data(pl->segments[0]);
+  //stop threads for non-main segments
+  for (int i = 1; i < pl->segments_n; i++)  {
+    segment_thread_stop(pl->segments[i]);
   }
+  return 1;
+}
 
-  //run non-concurrent pipes
-  while (quit == 0)  {
-    if (signal(SIGINT, sig_handler) == SIG_ERR)  {
-      fprintf(stderr, "pipeline_run: failed to catch sig\n");
-    }
-    if (pl->loop == 1)  {
-      quit = 1;
-    }
-    //double pipeline_time_before = get_clock_time();
-    for (int i = 0; i < pl->nc_n; i++)  {
-      //debug_pipe *debug = pipe_get_debug_pipe(pl->nodes[pl->nc_sort[i]]);
-      //debug_pipe_start_timer(debug);
-      int status = pipe_run(pl->nodes[pl->nc_sort[i]], pl->in_data[pl->nc_sort[i]]);       
-      if (status < 0)  {
-        fprintf(stderr, "pipeline_run: failed to run pipe %d\n", pl->nc_sort[i]); 
-        return 0;
-      }
-      else if (status == 0)  {  //pipe called pipeline termination
-        quit = 1;
-      } 
-      
-      //debug_pipe_stop_timer(debug);     
-      //double pipe_time = debug_pipe_time(debug);
-      //printf("pipe %d ran in %fs\n", pl->nc_sort[i], pipe_time);
-    }
-    
-     
-    //double pipeline_time = get_clock_time() - pipeline_time_before;
-    //printf("pipeline ran in %fs\n", pipeline_time);
-    //double lag = pl->interval - pipeline_time;
-    //if ((pl->loop != 1) && (lag > 0))  {
-    //  printf("sleeping for %fs\n", lag);
-    //  usleep((int)(lag*1000000));
-    //}
-    //else  {
-    //  printf("\n");
-    //}
-    
+int pipeline_run(pipeline* pl)  { 
+  segment_run(pl->segments[0]);
+  return 1;
+}
 
-    if (pl->loop != 0)  {
-      pl->loop--;
-    }
-  }
-
-  //stop threads for concurrent pipes
-  for (int i = 0; i < (pl->nodes_n - pl->nc_n); i++)  {
-    pipe_* p = pl->nodes[pl->c_sort[i]];
-    concurrent_pipe_stop(pipe_get_concurrent_pipe(p));  //send signal to stop thread
-    if (pipe_get_output(p) != NULL)  {  //unblock data structures so threads don't wait indefinitely
-      data_unblock(pipe_get_output(p));
-    }
-    pthread_join(*(concurrent_pipe_thread(pipe_get_concurrent_pipe(p))), NULL); //wait for thread to stop 
-  }
-
-  //kill pipes, print pipe averages run times
+int pipeline_kill(pipeline *pl)  {
   for (int i = 0; i < pl->nodes_n; i++)  {
     pipe_* p = pl->nodes[pl->sort[i]];
-    //double pipe_average_time = debug_pipe_average_time(pipe_get_debug_pipe(p));
-    //fprintf(stdout, "pipe: %d average run time=%fs, times run=%d\n", i, pipe_average_time, debug_pipe_get_times_run(pipe_get_debug_pipe(p)));
     pipe_kill(p, pl->in_data[pl->sort[i]]);  //TODO check for fail?
   }
-
-  //print total run time
-  //double total_time = get_clock_time() - total_time_before;
-  //fprintf(stdout, "total run time: %fs\n", total_time);
-
   return 1;
 }
 
 int pipeline_init(pipeline *pl)  {
-//  printf("initing: n=%d\n", pl->nodes_n);
+  //printf("initing: n=%d\n", pl->nodes_n);
   pipeline_sort(pl);
   //pipes are now sorted 
   for (int i = 0; i < pl->nodes_n; i++)  {
-  //  printf("initing pipe_ %p\n", pl->nodes[pl->sort[i]]);
+   // printf("initing pipe %p %s\n", pl->nodes[pl->sort[i]], pipe_get_type(pl->nodes[pl->sort[i]]));
+    pipe_* p = pl->nodes[pl->sort[i]];
     linkedlist* in_data = pl->in_data[pl->sort[i]];
-    if (pipe_init(pl->nodes[pl->sort[i]], in_data) != 1)  {
+    if (pipe_init(p, in_data) != 1)  {
       fprintf(stderr, "pipeline_init: failed to init pipe %d\n", pl->sort[i]); 
       return 0;
     }
-  } 
+    //make pipe and output pipes concurrent if any outputs pipes are from separate segment
+    int concurrent = 0;
+    int output_n = linkedlist_size(pl->adjacency_list[pl->sort[i]]);
+    linkedlist_reset_iterater(pl->adjacency_list[pl->sort[i]]);
+    int output_pipes[output_n];
+    for (int j = 0; j < output_n; j++)  {  //must do for loop due to null (0) id possibility
+      output_pipes[j] = (intptr_t)linkedlist_iterate(pl->adjacency_list[pl->sort[i]]);
+      if (pipe_get_segment(p) != pipe_get_segment(pl->nodes[output_pipes[j]]))  {
+        concurrent = 1;
+      }
+    }
+    if (concurrent == 1)  {
+      pipe_set_concurrent(p, 1);
+      for (int j = 0; j < output_n; j++)  {
+        pipe_set_concurrent(pl->nodes[output_pipes[j]], 1);
+      } 
+    }
+    //make data blocking if concurrent
+    if (pipe_get_concurrent(p) == 1)  {
+      data *d = pipe_get_output(p);
+      if (d != NULL)  {
+        data_make_blocking(d);
+      }
+    }
+    //increment readers of concurrent outputs
+    data **data_ptr = NULL;
+    while ((data_ptr = (data**)linkedlist_iterate(in_data)) != NULL)  {
+      data *d = *data_ptr;
+      if (data_get_blocking(d))  {
+        data_increment_readers(d, segment_get_thread_ptr(pl->segments[pipe_get_segment(p)]));
+      }
+    }
+    segment_add(pl->segments[pipe_get_segment(p)], p, in_data); ///add to segment
+  }
   return 1;
 }

@@ -4,7 +4,7 @@
 #include "data.h"
 #include "linkedlist.h"
 #include "debug_pipe.h"
-#include "concurrent_pipe.h"
+//#include "concurrent_pipe.h"
 
 typedef struct pipe pipe_;  //poor solution to unistd.h name clash
 struct pipe;
@@ -16,6 +16,8 @@ int pipe_run(pipe_*, linkedlist*);
 int pipe_init(pipe_*, linkedlist*);  
 int pipe_kill(pipe_*, linkedlist*);
 
+void pipe_set_type(pipe_*, char*);
+char *pipe_get_type(pipe_*);
 void pipe_set_id(pipe_*, int);
 int pipe_get_id(pipe_*);
 void pipe_set_output(pipe_*, data*);
@@ -37,8 +39,8 @@ void pipe_set_params(pipe_*, char**);
 char **pipe_get_params(pipe_*);
 void pipe_set_concurrent(pipe_*, int);
 int pipe_get_concurrent(pipe_*);
-void pipe_set_concurrent_pipe(pipe_*, concurrent_pipe*);
-concurrent_pipe *pipe_get_concurrent_pipe(pipe_*);
+void pipe_set_segment(pipe_*, int);
+int pipe_get_segment(pipe_*);
 void pipe_set_debug_pipe(pipe_*, debug_pipe*);
 debug_pipe *pipe_get_debug_pipe(pipe_*);
 

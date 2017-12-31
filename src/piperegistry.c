@@ -12,20 +12,34 @@ linkedlist *keys;  //TODO more elegant solution using uthash?
 int piperegistry_init()  {  //???
   ht = hashtable_create();
   if (ht == NULL)  {
-    return 0;
+    return -1;
   }
   keys = linkedlist_create();
   if (keys == NULL)  {
-    return 0;
+    return -1;
   }
 
   register_pipes();
   
-
   return 1;
-} 
+}
 
-int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)(pipe_*, linkedlist*), int(*kill)(pipe_*, linkedlist*), char *valid_inputs)  {
+int piperegistry_deinit()  {	
+  char **keys_array = NULL;
+  int keys_n = list_available_pipes(&keys_array);
+  for (int i = 0; i < keys_n; i++)  {
+    pipedes *pd = (pipedes*)hashtable_lookup(ht, keys_array[i]);
+    free(pd->description);
+    free(pd);
+    hashtable_remove(ht, keys_array[i]);
+  }
+  free(keys_array);  
+  hashtable_destroy(ht);
+  linkedlist_destroy(keys);
+  return 1;
+}
+
+int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)(pipe_*, linkedlist*), int(*kill)(pipe_*, linkedlist*), char *description)  {
   pipedes *pd = (pipedes*)malloc(sizeof(pipedes));
   if (pd == NULL)  {
     fprintf(stderr, "register_pipe: failed to allocate memory\n");
@@ -34,10 +48,10 @@ int piperegistry_register(char *name, int(*init)(pipe_*, linkedlist*), int(*run)
   pd->init = init;
   pd->run = run;
   pd->kill = kill;
-  pd->valid_inputs = (char*)malloc(sizeof(char)*strlen(valid_inputs));
-  strncpy(pd->valid_inputs, valid_inputs, strlen(valid_inputs));
+  pd->description = (char*)malloc(sizeof(char)*strlen(description));
+  strncpy(pd->description, description, strlen(description));
   if (hashtable_insert(ht, name, (void*)pd) == 0)  {  //name already in table
-    free(pd->valid_inputs);
+    free(pd->description);
     free(pd);
     fprintf(stderr, "register pipe: failed to register pipe %s\n", name);
     return 0;
@@ -55,18 +69,18 @@ int piperegistry_deregister(char* name)  {
     return 0;
   }
   hashtable_remove(ht, name);
-  free(pd->valid_inputs); //?
+  free(pd->description);
   free(pd);
 
-  linkedlist_remove(keys, (void*)name);
+  linkedlist_remove(keys, name);
 
   return 1;
 }
 
 //return list of valid input data (char*) TODO
-linkedlist* piperegistry_get_valid_inputs(char *name)  {
-  return NULL;
-}
+//linkedlist* piperegistry_get_description(char *name)  {
+//  return NULL;
+//}
 
 hashtable *piperegistry_ht()  {
   return ht;

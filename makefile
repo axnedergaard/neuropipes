@@ -1,7 +1,7 @@
 CC = gcc
 maindir = src/
 pipesdir = src/pipes/
-main = concurrent_pipe gettime debug_pipe hashtable linkedlist data pipe parameters register_pipes pipebuilder piperegistry pipeline
+main = segment gettime debug_pipe hashtable linkedlist data pipe parameters register_pipes pipebuilder piperegistry pipeline
 pipes = pipe_power pipe_dummy_computation pipe_writesharedmem pipe_inversefouriertransform pipe_dummyemotiv pipe_filter pipe_fouriertransform pipe_print pipe_emotiv pipe_writefile pipe_readfile pipe_rpi
 ext = emokit edflib fidlib
 mainf = $(addprefix $(maindir), $(main))
@@ -28,7 +28,7 @@ uninstall :
 	rm /usr/lib/libneuropipes.so*
 
 clean : 
-	rm -f driver cli tests/test libneuropipes.so* *.o
+	rm -f driver cli test libneuropipes.so* *.o
 
 cli : cli.c
 	$(CC) cli.c -o cli -lneuropipes
@@ -36,5 +36,5 @@ cli : cli.c
 driver : driver.c
 	$(CC) driver.c -o driver -lneuropipes
 
-test :	tests/test.c $(addsuffix .c, $(extf) $(pipesf) $(mainf))
-	$(CC) -o tests/test tests/test.c $(addsuffix .c, $(extf) $(pipesf) $(mainf)) $(lflags) -lcmocka $(cflags)
+test :	tests/test.c 
+	$(CC) tests/test.c -o test -lneuropipes -lcmocka

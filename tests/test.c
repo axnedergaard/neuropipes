@@ -1,31 +1,28 @@
+//TODO test segments, implemented pipes
+
 #include <stddef.h>
 #include <stdarg.h>
 #include <setjmp.h>
 #include <cmocka.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "../src/pipeline.h"
 #include "../src/pipebuilder.h"
 #include "../src/parameters.h"
 #include "../src/linkedlist.h"
 #include "../src/hashtable.h"
+#include "../src/piperegistry.h"
 
 static int pipe_setup(void **state)  {
-  *state = build_pipe("DUMMYEMOTIV", 0);
+  piperegistry_init();
+  *state = build_pipe("DUMMYEMOTIV");
   return 0;
 }
 
 static int pipe_teardown(void **state)  {
   pipe_destroy(*state);
+  piperegistry_deinit();
   return 0;
-}
-
-static void pipe_test_concurrent(void **state)  {
-  pipe_ *p = *state;
-  assert_int_equal(pipe_get_concurrent(p), 0);
-  
-  pipe_ *cp = build_pipe("DUMMYEMOTIV", 1);
-  assert_int_equal(pipe_get_concurrent(cp), 1);
-  pipe_destroy(cp);
 }
 
 static void pipe_test_init_run(void **state) {
@@ -43,23 +40,16 @@ static void pipe_test_parameters(void **state)  {
   pipe_ *p = *state;
   assert_int_equal(pipe_get_params_n(p), 0);
   
-  pipe_ *p1 = build_pipe("DUMMYEMOTIV;var1=1", 0);
+  pipe_ *p1 = build_pipe("DUMMYEMOTIV;var1=1");
   assert_int_equal(pipe_get_params_n(p1), 1);
   assert_string_equal(pipe_get_params(p1)[0], "var1=1");  
   pipe_destroy(p1);
 
-  pipe_ *p2 = build_pipe("DUMMYEMOTIV;var1=1,var2=2", 0);
+  pipe_ *p2 = build_pipe("DUMMYEMOTIV;var1=1,var2=2");
   assert_int_equal(pipe_get_params_n(p2), 2);   
   assert_string_equal(pipe_get_params(p2)[0], "var1=1");
   assert_string_equal(pipe_get_params(p2)[1], "var2=2");
   pipe_destroy(p2);
-}
-
-static void pipe_test_run_before_init_fails(void ** state)  {  //run before init should return error
-  pipe_* p = *state;
-  int status = pipe_run(p, NULL); 
-
-  assert_int_equal(status, 0);
 }
 
 static int pipeline_setup(void **state)  {
@@ -78,12 +68,12 @@ static void pipeline_test_add_pipe(void **state)  {
 
   assert_int_equal(pipeline_size(pl), 0);
 
-  id = pipeline_insert(pl, "DUMMYEMOTIV", 0); 
+  id = pipeline_add(pl, "DUMMYEMOTIV", 0); 
   assert_int_equal(id, 0);
   
   assert_int_equal(pipeline_size(pl), 1);
   
-  id = pipeline_insert(pl, "DUMMYCOMPUTATION", 0); 
+  id = pipeline_add(pl, "DUMMYCOMPUTATION", 0); 
   assert_int_equal(id, 1);
   
   assert_int_equal(pipeline_size(pl), 2);
@@ -92,9 +82,9 @@ static void pipeline_test_add_pipe(void **state)  {
 static void pipeline_test_init(void **state)  {
   pipeline *pl = *state;
 
-  int input = pipeline_insert(pl, "DUMMYEMOTIV", 0);
-  int computation = pipeline_insert(pl, "DUMMYCOMPUTATION", 0);
-  pipeline_insert_edge(pl, input, computation);
+  int input = pipeline_add(pl, "DUMMYEMOTIV", 0);
+  int computation = pipeline_add(pl, "DUMMYCOMPUTATION", 0);
+  pipeline_link(pl, input, computation);
 
   int n = pipeline_size(pl);
   
@@ -163,12 +153,6 @@ static void data_test_blocking(void **state)  {
   data_make_blocking(d);
   
   assert_int_equal(data_get_blocking(d), 1);  
-
-  assert_int_equal(data_get_kill(d), 0);   
-
-  data_unblock(d);
-
-  assert_int_equal(data_get_kill(d), 1);  
 }
 
 static void data_test_copy(void **state)  {
@@ -196,6 +180,16 @@ static void data_test_copy(void **state)  {
   free(output_buffer);
 }
 
+static int builder_setup(void **state)  {
+  piperegistry_init();
+  return 0;
+}
+
+static int builder_teardown(void **state)  {
+  piperegistry_deinit();
+  return 0;
+}
+
 static void parameters_test_tokenise(void **state)  {
   char spec[] = "TYPE;var1=val1,var2=val2";
   char *type;
@@ -213,15 +207,15 @@ static void parameters_test_tokenise(void **state)  {
 }
 
 static void parameters_test_get_parameter(void **state)  {
-  pipe_ *p = build_pipe("EMOTIV;var1=val1,var2=val2", 0);
+  pipe_ *p = build_pipe("EMOTIV;var1=val1,var2=val2");
 
   assert_string_equal(get_parameter(p, "var1"), "val1");
   assert_string_equal(get_parameter(p, "var2"), "val2");
   assert_null(get_parameter(p, "var3"));
 }
 
-static void pipebuilder_invalid_spec(void **state)  {
-  assert_null(build_pipe("INVALID", 0));
+static void pipebuilder_test_invalid_spec(void **state)  {
+  assert_null(build_pipe("INVALID"));
 }
 
 static int linkedlist_setup(void **state)  {
@@ -265,7 +259,7 @@ static void linkedlist_test_iterater(void **state)  {
   linkedlist *l = *state;
  
   for (int i = 0; i < 10; i++)  { 
-    linkedlist_insert(l, (void*)i);
+    linkedlist_insert(l, (void*)(intptr_t)i);
   }
 
   int i = 0;
@@ -314,16 +308,14 @@ int main()  {
     cmocka_unit_test_setup_teardown(pipeline_test_add_pipe, pipeline_setup, pipeline_teardown),
     cmocka_unit_test_setup_teardown(pipeline_test_init, pipeline_setup, pipeline_teardown),
     cmocka_unit_test_setup_teardown(pipe_test_init_run, pipe_setup, pipe_teardown),
-    cmocka_unit_test_setup_teardown(pipe_test_run_before_init_fails, pipe_setup, pipe_teardown),
     cmocka_unit_test_setup_teardown(pipe_test_parameters, pipe_setup, pipe_teardown),
-    cmocka_unit_test_setup_teardown(pipe_test_concurrent, pipe_setup, pipe_teardown),
     cmocka_unit_test_setup_teardown(data_test_create, data_setup, data_teardown),
     cmocka_unit_test_setup_teardown(data_test_create_from, data_setup, data_teardown),
     cmocka_unit_test_setup_teardown(data_test_blocking, data_setup, data_teardown),
     cmocka_unit_test_setup_teardown(data_test_copy, data_setup, data_teardown),
-    cmocka_unit_test(parameters_test_tokenise),
-    cmocka_unit_test(parameters_test_get_parameter),
-    cmocka_unit_test(pipebuilder_invalid_spec),
+    cmocka_unit_test_setup_teardown(parameters_test_tokenise, builder_setup, builder_teardown),
+    cmocka_unit_test_setup_teardown(parameters_test_get_parameter, builder_setup, builder_teardown),
+    cmocka_unit_test_setup_teardown(pipebuilder_test_invalid_spec, builder_setup, builder_teardown),
     cmocka_unit_test_setup_teardown(linkedlist_test_insert_remove_clear, linkedlist_setup, linkedlist_teardown),
     cmocka_unit_test_setup_teardown(linkedlist_test_head_tail, linkedlist_setup, linkedlist_teardown),
     cmocka_unit_test_setup_teardown(linkedlist_test_iterater, linkedlist_setup, linkedlist_teardown),

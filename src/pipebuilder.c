@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-pipe_* build_pipe(char *spec, int concurrent)  {
+pipe_* build_pipe(char *spec)  {
   //tokenise spec    
   int params_n = 0;
   char **params = NULL;
@@ -20,11 +20,11 @@ pipe_* build_pipe(char *spec, int concurrent)  {
   pipe_set_init(p, pd->init);
   pipe_set_run(p, pd->run);
   pipe_set_kill(p, pd->kill);
-  pipe_set_concurrent(p, concurrent);
   pipe_set_params_n(p, params_n);
   pipe_set_params(p, params);
+  pipe_set_type(p, type);
 
-//  printf("built pipe %p with spec %s\n", p, spec);
+  //printf("built pipe %p with spec %s\n", p, spec);
 
   return p;
 }
