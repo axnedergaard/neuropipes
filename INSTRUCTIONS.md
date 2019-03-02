@@ -28,7 +28,7 @@ Pipeline instances are the central objects of neuropipes. A pipeline instance is
 There are 3 distinct phases to pipeline instance usage:
  
 1. *Construction*: Add pipes with pipeline_insert() and connect them with pipeline_insert_edge().   
-    1. pipeline_insert() takes as parameters the pipeline instance, the pipe specification (format: "TYPE;param1=value1,param2=value2") and a boolean indicating whether the pipe is concurrent (should run on a separate thread). Note that concurrent pipes connected to concurrent pipes are not supported. The function will return the id of the pipe.  
+    1. pipeline_insert() takes as parameters the pipeline instance, the pipe specification (format: "TYPE;param1=value1,param2=value2") and a boolean indicating whether the pipe is concurrent (should run on a separate thread). The function will return the id of the pipe.  
     2. pipeline_insert_edge() takes as parameters the pipeline instance, and the ids of two pipes to connect. The first pipe will provide input to the second pipe.
 2. *Initialisation*: Initialise the pipeline with pipeline_init()
 3. *Running*: Run the pipeline with pipeline_run()
